@@ -1,6 +1,7 @@
 import react from 'react';
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
+import Switch from '@mui/material/Switch';
 import Toolbar from '@mui/material/Toolbar';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
@@ -10,28 +11,35 @@ import Container from '@mui/material/Container';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import MenuItem from '@mui/material/MenuItem';
-import { MdAdb } from "react-icons/md";
 import logo from '../assets/logo.svg';
 import { NavLink } from "react-router";
+import ModeContext from '../components/mode_context';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import { IoMdLogIn } from "react-icons/io";
 import i18n from 'i18next';
+import { IoMdSunny, IoMdMoon } from "react-icons/io";
+import { useColorScheme } from '@mui/material/styles';
 
 interface Props {
     t: any
     navigate: any
+    mode: any
+    setMode: any
 }
 
 interface State {
-    anchorElNav: null | HTMLElement;
-    anchorElUser: null | HTMLElement;
+    isDark: boolean
+    anchorElNav: null | HTMLElement
+    anchorElUser: null | HTMLElement
 }
 
 
 export class InnerPublicNavBar extends react.Component<Props, State> {
 
+    static contextType = ModeContext;
+    declare context: React.ContextType<typeof ModeContext>;
     pages = [
         {
             key: 2,
@@ -48,6 +56,7 @@ export class InnerPublicNavBar extends react.Component<Props, State> {
         super(props);
         console.log("Constructing page");
         this.state = {
+            isDark: true,
             anchorElNav: null,
             anchorElUser: null,
         }
@@ -92,12 +101,13 @@ export class InnerPublicNavBar extends react.Component<Props, State> {
     }
 
     render = () => {
+        console.log(`Context is Dark: ${this.context.isDark}`);
         return (
             <>
                 <AppBar
                     position="fixed"
                     sx={{
-                        backgroundColor: "#065ea6",
+                        backgroundColor: "#a8b858",
                         marginBottom: 2,
                         zIndex: (theme) => theme.zIndex.drawer + 1
                     }}
@@ -105,10 +115,10 @@ export class InnerPublicNavBar extends react.Component<Props, State> {
                     <Container maxWidth="xl" >
                         <Toolbar disableGutters >
                             <Avatar
-                                alt="preemer"
+                                alt="bloc"
                                 src={logo}
-                                sx={{ width: 32, height: 32, mx: "auto" }} />
-                            <NavLink to="/" style={{ textDecoration: 'none', color: 'inherit' }} end>
+                                sx={{ width: 32, height: 32, p: 1}} />
+                            <NavLink to="/" style={{ textDecoration: 'none'}} end>
                                 <Typography
                                     variant="h6"
                                     sx={{
@@ -117,11 +127,11 @@ export class InnerPublicNavBar extends react.Component<Props, State> {
                                         display: { xs: 'none', md: 'flex' },
                                         fontWeight: 700,
                                         letterSpacing: '.3rem',
-                                        color: 'inherit',
                                         textDecoration: 'none',
+                                        color: this.context.isDark?'rgba(0,0,0,0.54)':'white' 
                                     }}
                                 >
-                                    preemer
+                                    bloc
                                 </Typography>
                             </NavLink>
 
@@ -155,13 +165,13 @@ export class InnerPublicNavBar extends react.Component<Props, State> {
                                     {this.pages.map((page) => (
                                         <MenuItem key={page.key} onClick={this.handleCloseNavMenu}>
                                             <NavLink to={page.navigateTo} style={{ textDecoration: 'none' }} end>
-                                                <Typography sx={{ textAlign: 'center', textDecoration: 'none' }}>{page.name}</Typography>
+                                                <Typography sx={{ textAlign: 'center', textDecoration: 'none', color: this.context.isDark?'rgba(0,0,0,0.54)':'white'  }}>{page.name}</Typography>
+                                        
                                             </NavLink>
                                         </MenuItem>
                                     ))}
                                 </Menu>
                             </Box>
-                            <MdAdb />
                             <Typography
                                 variant="h5"
                                 noWrap
@@ -181,6 +191,16 @@ export class InnerPublicNavBar extends react.Component<Props, State> {
                                 LOGO
                             </Typography>
                             <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex', flexDirection: 'row-reverse' } }}>
+                                <MenuItem>
+                                    {this.context.isDark ?  <IoMdSunny color="rgba(0,0,0,0.54)"/>:""}
+                                    <Switch
+                                    checked={this.context.isDark}
+                                        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                                            this.props.setMode(event.target.checked?"light":"dark");
+                                            this.context.toggleMode();
+                                        }}/>
+                                    {this.context.isDark ?  "":<IoMdMoon color="white"/>}
+                                </MenuItem>
                                 <MenuItem>
                                     <Select
                                         labelId="demo-simple-select-label"
@@ -206,7 +226,11 @@ export class InnerPublicNavBar extends react.Component<Props, State> {
                                             onClick={this.handleCloseNavMenu}
                                             sx={{ my: 2, color: 'white', display: 'block', textDecoration: 'none' }}
                                         >
-                                            <Typography sx={{ textAlign: 'center', textDecoration: 'none', color: 'inherit' }}>{page.name}</Typography>
+                                            <Typography sx={{
+                                                textAlign: 'center',
+                                                textDecoration: 'none',
+                                                color: this.context.isDark?'rgba(0,0,0,0.54)':'white'
+                                            }}>{page.name}</Typography>
                                         </Button>
                                     </NavLink>
                                 ))}
@@ -237,9 +261,10 @@ export class InnerPublicNavBar extends react.Component<Props, State> {
         );
     }
 }
+
 export default function PublicNavBar() {
     const navigate = useNavigate();
     const { t } = useTranslation();
-    return <InnerPublicNavBar t={t} navigate={navigate} />;
+    const { mode, setMode } = useColorScheme();
+    return <InnerPublicNavBar t={t} navigate={navigate} mode={mode} setMode={setMode}/>;
 }
-

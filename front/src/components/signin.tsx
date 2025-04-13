@@ -73,13 +73,13 @@ class SignIn extends React.Component<SignInProps, SignInState> {
                             m: 1,
                         }}>
                             <Avatar
-                                alt="PreEmer"
+                                alt="Bloc"
                                 src={logo}
-                                sx={{ width: 256, height: 256, mx: "auto" }} />
+                                sx={{ width: 256, height: 256, p: 2}} />
                         </Box>
                         <Box
                             sx={{
-                                backgroundColor: "#065ea6ee",
+                                backgroundColor: "#A8B858aa",
                                 borderRadius: 2,
                                 p: 2
                         }}>

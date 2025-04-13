@@ -1,4 +1,6 @@
 import react from "react";
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
 import {
     BrowserRouter,
     Routes,
@@ -17,6 +19,7 @@ import HomePage from "./pages/public/home_page";
 
 import { AuthContextProvider } from "./components/auth_context";
 import "./App.css";
+import ModeContext, { ModeContextProvider } from "./components/mode_context";
 
 i18n
     .use(Backend)
@@ -31,8 +34,15 @@ i18n
             escapeValue: false,
         }
     });
+const theme = createTheme({
+  colorSchemes: {
+    dark: true,
+  },
+});
 
 export default class App extends react.Component {
+    static contextType = ModeContext;
+    declare context: React.ContextType<typeof ModeContext>;
     state = {
         darkMode: true,
     }
@@ -40,19 +50,24 @@ export default class App extends react.Component {
     render = () => {
         return (
             <AuthContextProvider>
-                <BrowserRouter>
-                    <Routes>
-                        <Route path="/" element={<PublicLayout />} >
-                            <Route index element={<HomePage />} />
-                        </Route>
-                        <Route path="/" element={<ProtectedLayout />} >
-                            <Route path="logout" element={<LogoutPage />} />
-                        </Route>
-                        <Route path="/" element={<AuthLayout />} >
-                            <Route path="login" element={<LoginPage />} />
-                        </Route>
-                    </Routes>
-                </BrowserRouter>
+                <ModeContextProvider>
+                    <ThemeProvider theme={theme}>
+                        <CssBaseline />
+                        <BrowserRouter>
+                            <Routes>
+                                <Route path="/" element={<PublicLayout />} >
+                                    <Route index element={<HomePage />} />
+                                </Route>
+                                <Route path="/" element={<ProtectedLayout />} >
+                                    <Route path="logout" element={<LogoutPage />} />
+                                </Route>
+                                <Route path="/" element={<AuthLayout />} >
+                                    <Route path="login" element={<LoginPage />} />
+                                </Route>
+                            </Routes>
+                        </BrowserRouter>
+                    </ThemeProvider>
+                </ModeContextProvider>
             </AuthContextProvider>
         );
     }

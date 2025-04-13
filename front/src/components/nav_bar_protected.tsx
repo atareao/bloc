@@ -67,7 +67,7 @@ export default class NavBar extends react.Component {
                     <Container maxWidth="xl">
                         <Toolbar disableGutters>
                             <Avatar
-                                alt="Preemer"
+                                alt="Bloc"
                                 src={logo}
                                 sx={{ width: 32, height: 32, mx: "auto" }} />
                             <NavLink to="/" style={{ textDecoration: 'none', color: 'inherit' }} end>
@@ -83,7 +83,7 @@ export default class NavBar extends react.Component {
                                         textDecoration: 'none',
                                     }}
                                 >
-                                    Preemer
+                                    bloc
                                 </Typography>
                             </NavLink>
 
