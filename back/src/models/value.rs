@@ -5,14 +5,14 @@ use sqlx::{postgres::{PgPool, PgRow}, query, Row, Error};
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct NewValue{
     pub reference: String,
-    pub name: String,
+    pub value: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Value{
     pub id: i32,
     pub reference: String,
-    pub name: String,
+    pub value: String,
     pub created_at: Option<DateTime<Utc>>,
     pub updated_at: Option<DateTime<Utc>>,
 }
@@ -22,7 +22,7 @@ impl Value{
         Self{
             id: row.get("id"),
             reference: row.get("reference"),
-            name: row.get("name"),
+            value: row.get("value"),
             created_at: row.get("created_at"),
             updated_at: row.get("updated_at"),
         }
@@ -30,11 +30,11 @@ impl Value{
 
     pub async fn create(pool: &PgPool, value: &NewValue) -> Result<Value, Error> {
 
-        let sql = "INSERT INTO values (reference, name, created_at, updated_at) VALUES ($1, $2, $3, $4) RETURNING *";
+        let sql = "INSERT INTO values (reference, value, created_at, updated_at) VALUES ($1, $2, $3, $4) RETURNING *";
         let now = Utc::now();
         query(sql)
             .bind(&value.reference)
-            .bind(&value.name)
+            .bind(&value.value)
             .bind(now)
             .bind(now)
             .map(Self::from_row)
@@ -43,11 +43,11 @@ impl Value{
     }
 
     pub async fn update(pool: &PgPool, value: &Value) -> Result<Value, Error> {
-        let sql = "UPDATE values set reference = $1, name = $2, updated_at = $3 WHERE id = $4 RETURNING *"; 
+        let sql = "UPDATE values set reference = $1, value = $2, updated_at = $3 WHERE id = $4 RETURNING *"; 
         let now = Utc::now();
         query(sql)
             .bind(&value.reference)
-            .bind(&value.name)
+            .bind(&value.value)
             .bind(now)
             .bind(value.id)
             .map(Self::from_row)
@@ -72,10 +72,10 @@ impl Value{
             .fetch_all(pool)
             .await
     }
-    pub async fn read_by_name(pool: &PgPool, name: &str) -> Result<Value, Error> {
-        let sql = "SELECT * FROM values WHERE name = $1";
+    pub async fn read_by_value(pool: &PgPool, value: &str) -> Result<Value, Error> {
+        let sql = "SELECT * FROM values WHERE value = $1";
         query(sql)
-            .bind(name)
+            .bind(value)
             .map(Self::from_row)
             .fetch_one(pool)
             .await

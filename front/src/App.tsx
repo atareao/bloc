@@ -1,35 +1,60 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import react from "react";
+import {
+    BrowserRouter,
+    Routes,
+    Route,
+} from "react-router";
+import i18n from "i18next";
+import { initReactI18next } from "react-i18next";
+import LanguageDetector from "i18next-browser-languagedetector";
+import Backend from "i18next-http-backend";
+import PublicLayout from "./layouts/public_layout";
+import AuthLayout from "./layouts/auth_layout";
+import ProtectedLayout from "./layouts/protected_layout";
+import LoginPage from "./pages/auth/login_page";
+import LogoutPage from "./pages/protected/logout_page";
+import HomePage from "./pages/public/home_page";
 
-function App() {
-  const [count, setCount] = useState(0)
+import { AuthContextProvider } from "./components/auth_context";
+import "./App.css";
 
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+i18n
+    .use(Backend)
+    .use(LanguageDetector)
+    .use(initReactI18next) // passes i18n down to react-i18next
+    .init({
+        load: 'languageOnly',
+        lng: localStorage.getItem("i18nextLng") || "es",
+        fallbackLng: "en",
+        debug: true,
+        interpolation: {
+            escapeValue: false,
+        }
+    });
+
+export default class App extends react.Component {
+    state = {
+        darkMode: true,
+    }
+
+    render = () => {
+        return (
+            <AuthContextProvider>
+                <BrowserRouter>
+                    <Routes>
+                        <Route path="/" element={<PublicLayout />} >
+                            <Route index element={<HomePage />} />
+                        </Route>
+                        <Route path="/" element={<ProtectedLayout />} >
+                            <Route path="logout" element={<LogoutPage />} />
+                        </Route>
+                        <Route path="/" element={<AuthLayout />} >
+                            <Route path="login" element={<LoginPage />} />
+                        </Route>
+                    </Routes>
+                </BrowserRouter>
+            </AuthContextProvider>
+        );
+    }
 }
 
-export default App
