@@ -43,8 +43,8 @@ export class InnerPublicNavBar extends react.Component<Props, State> {
     pages = [
         {
             key: 2,
-            name: this.props.t("Contact"),
-            navigateTo: "/contact",
+            name: this.props.t("Editor"),
+            navigateTo: "/editor",
         },
         {
             key: 1,

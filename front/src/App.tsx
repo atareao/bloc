@@ -16,6 +16,7 @@ import ProtectedLayout from "./layouts/protected_layout";
 import LoginPage from "./pages/auth/login_page";
 import LogoutPage from "./pages/protected/logout_page";
 import HomePage from "./pages/public/home_page";
+import EditorPage from "./pages/public/editor_page";
 
 import { AuthContextProvider } from "./components/auth_context";
 import "./App.css";
@@ -57,6 +58,7 @@ export default class App extends react.Component {
                             <Routes>
                                 <Route path="/" element={<PublicLayout />} >
                                     <Route index element={<HomePage />} />
+                                    <Route path="editor" element={<EditorPage />} />
                                 </Route>
                                 <Route path="/" element={<ProtectedLayout />} >
                                     <Route path="logout" element={<LogoutPage />} />
