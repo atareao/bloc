@@ -226,11 +226,7 @@ export class InnerPublicNavBar extends react.Component<Props, State> {
                                             onClick={this.handleCloseNavMenu}
                                             sx={{ my: 2, color: 'white', display: 'block', textDecoration: 'none' }}
                                         >
-                                            <Typography sx={{
-                                                textAlign: 'center',
-                                                textDecoration: 'none',
-                                                color: this.context.isDark?'rgba(0,0,0,0.54)':'white'
-                                            }}>{page.name}</Typography>
+                                            <Typography sx={{ textAlign: 'center', textDecoration: 'none', color: 'inherit' }}>{page.name}</Typography>
                                         </Button>
                                     </NavLink>
                                 ))}

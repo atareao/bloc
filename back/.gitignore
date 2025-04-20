@@ -1,2 +1,3 @@
 /target
 .env
+migrations/20250420060836_users_data.*
