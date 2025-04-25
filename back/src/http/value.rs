@@ -61,7 +61,8 @@ pub async fn read(
     match Value::read_all(&app_state.pool).await {
         Ok(values) => {
             debug!("Values: {:?}", values);
-            ApiResponse::new(StatusCode::OK, "Values", Data::One(serde_json::to_value(values).unwrap()))
+            let values = values.into_iter().map(|v| serde_json::to_value(v).unwrap()).collect::<Vec<_>>();
+            ApiResponse::new(StatusCode::OK, "Values", Data::Some(values))
         },
         Err(e) => {
             error!("Error reading values: {:?}", e);

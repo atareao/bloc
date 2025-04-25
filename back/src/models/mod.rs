@@ -2,11 +2,17 @@ mod api_response;
 mod user;
 mod value;
 mod data;
+mod topic;
+mod tag;
+mod post;
 
 pub use data::Data;
 pub use api_response::ApiResponse;
 pub use user::{User, TokenClaims, UserSchema, UserRegister};
 pub use value::{NewValue, Value};
+pub use topic::{NewTopic, Topic};
+pub use tag::{NewTag, Tag};
+pub use post::{NewPost, Post};
 pub type Error = Box<dyn std::error::Error>;
 
 use sqlx::postgres::PgPool;

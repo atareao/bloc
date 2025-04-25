@@ -43,6 +43,9 @@ use http::{
     health_router,
     user_router,
     value_router,
+    topic_router,
+    tag_router,
+    post_router,
 };
 use dotenv::dotenv;
 use models::{
@@ -96,6 +99,9 @@ async fn main() -> Result<(), Error> {
         .nest("/health", health_router())
         .nest("/auth", user_router())
         .nest("/values", value_router())
+        .nest("/topics", topic_router())
+        .nest("/tags", tag_router())
+        .nest("/posts", post_router())
         .with_state(Arc::new(AppState {
             pool,
             secret,
