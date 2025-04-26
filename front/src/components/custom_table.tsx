@@ -1,5 +1,5 @@
 import * as React from "react";
-import { MdAdd, MdDelete, MdCancel, MdEdit } from "react-icons/md";
+import { MdDelete, MdCancel, MdEdit } from "react-icons/md";
 import {
     MuiEvent,
     GridRowsProp,
@@ -10,8 +10,6 @@ import {
     GridRowModes,
     GridRowModel,
     GridPaginationModel,
-    Toolbar,
-    ToolbarButton,
     GridRowEditStopReasons,
     GridCellEditStopParams,
     GridActionsCellItem,
@@ -141,10 +139,6 @@ export default class CustomTable extends React.Component<Props, State> {
                             event.defaultMuiPrevented = true;
                         }
                     }}
-                    slots={{ toolbar: this.EditToolbar }}
-                    slotProps={{
-                        //toolbar: { setRows, this.setRowModesModel },
-                    }}
                     showToolbar
                 />
                 {!!this.state.snackbar && (
@@ -171,34 +165,6 @@ export default class CustomTable extends React.Component<Props, State> {
                 pagination: { ...this.state.pagination, page: 0 },
             });
         }
-    }
-
-    EditToolbar = () => {
-        const handleClick = () => {
-            console.log("Adding new row");
-            const id = -1;
-            const row = {...this.props.newRow, isNew: true}
-            //const row = { id, name: '', isNew: true };
-            this.setState({
-                //rows: [...this.state.rows.filter((row) => row.id !== id), row],
-                rows: [...this.state.rows, row],
-                rowModesModel: {
-                    ...this.state.rowModesModel,
-                    [id]: { mode: GridRowModes.Edit, fieldToFocus: 'name' },
-                }
-            });
-        };
-
-        return (
-            <Toolbar>
-                <ToolbarButton
-                    color="primary"
-                    onClick={handleClick}
-                >
-                    <MdAdd />
-                </ToolbarButton>
-            </Toolbar>
-        );
     }
 
     handleSaveClick = async (id: GridRowId) => {

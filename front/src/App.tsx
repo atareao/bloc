@@ -16,7 +16,7 @@ import AdminLayout from "./layouts/admin_layout";
 import LoginPage from "./pages/public/login_page";
 import HomePage from "./pages/public/home_page";
 import LogoutPage from "./pages/admin/logout_page";
-import EditorPage from "./pages/admin/editor_page";
+import PostPage from "./pages/admin/post_page";
 import PostsPage from "./pages/admin/posts_page";
 
 import { AuthContextProvider } from "./components/auth_context";
@@ -62,8 +62,8 @@ export default class App extends react.Component {
                                 </Route>
                                 <Route path="/admin" element={<AdminLayout />} >
                                     <Route path="logout" element={<LogoutPage />} />
-                                    <Route path="editor" element={<EditorPage />} />
                                     <Route path="posts" element={<PostsPage />} />
+                                    <Route path="post" element={<PostPage />} />
                                 </Route>
                                 <Route path="/" element={<AuthLayout />} >
                                     <Route path="login" element={<LoginPage />} />

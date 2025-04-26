@@ -5,6 +5,8 @@ import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
+import { useNavigate, useParams } from "react-router";
+import { useTranslation } from "react-i18next";
 import {
     MDXEditor,
     headingsPlugin,
@@ -27,16 +29,22 @@ import '@mdxeditor/editor/style.css'
 import ModeContext from '../../components/mode_context';
 
 
+interface Props {
+    t: any
+    navigate: any
+    postId: number
+}
+
 interface State {
     content: string
     postId: number
 }
 
 
-export default class EditorPage extends React.Component<{}, State> {
+export class InnerPostPage extends React.Component<Props, State> {
     static contextType = ModeContext;
     declare context: React.ContextType<typeof ModeContext>;
-    constructor(props: {}) {
+    constructor(props: Props) {
         super(props);
         console.log("Constructing page");
         this.state = {
@@ -114,3 +122,11 @@ export default class EditorPage extends React.Component<{}, State> {
         );
     }
 };
+
+export default function PostPage() {
+    const {postIdParam} = useParams();
+    const { t } = useTranslation();
+    const navigate = useNavigate();
+    const postId = postIdParam ? parseInt(postIdParam) : -1;
+    return <InnerPostPage postId={postId} navigate={navigate} t={t} />;
+}

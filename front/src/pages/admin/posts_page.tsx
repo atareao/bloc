@@ -1,6 +1,13 @@
 import React from "react";
 import Paper from '@mui/material/Paper';
+import Typography from '@mui/material/Typography';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
 import Box from '@mui/material/Box';
+import Stack from '@mui/material/Stack';
+import { useNavigate } from "react-router";
+import { useTranslation } from "react-i18next";
+import { MdAdd } from "react-icons/md";
 import CustomTable from "../../components/custom_table";
 import { loadData } from '../../common/utils';
 import { Topic } from '../../common/types';
@@ -8,14 +15,18 @@ import { STATUS } from "../../common/constants";
 
 const ENDPOINT = 'posts';
 
+interface Props {
+    t: any
+    navigate:any
+}
 interface State {
     columns: any[]
     isLoading: boolean
 }
 
-export default class PostsPage extends React.Component<{}, State> {
+export class InnerPostsPage extends React.Component<Props, State> {
 
-    constructor(props: {}) {
+    constructor(props: Props) {
         super(props);
         console.log("Constructing page");
         this.state = {
@@ -52,22 +63,22 @@ export default class PostsPage extends React.Component<{}, State> {
                 {
                     field: 'topic_id',
                     headerName: 'Topic',
-                    width: 150,
+                    width: 250,
                     type: 'singleSelect',
                     valueOptions: topics,
                     editable: true,
                     valueGetter: (value: any) => value ? value : topics[0].value
                 },
-                { field: 'title', headerName: 'title', type: 'string', width: 350, editable: true },
                 {
                     field: 'status',
                     headerName: 'Status',
-                    width: 150,
+                    width: 120,
                     type: 'singleSelect',
                     valueOptions: status,
                     editable: true,
                     valueGetter: (value: any) => value ? value : topics[0].value
                 },
+                { field: 'title', headerName: 'Title', type: 'string', width: 350 },
             ],
         });
     }
@@ -82,7 +93,7 @@ export default class PostsPage extends React.Component<{}, State> {
                     height: '60vh',
                     p: 2
                 }}>
-                    <h1>Loading...</h1>
+                    <Typography variant="h4">Posts</Typography>
                 </Paper>
             );
         }
@@ -95,7 +106,14 @@ export default class PostsPage extends React.Component<{}, State> {
                     height: '60vh',
                     p: 2
                 }}>
-                    <h1>Posts</h1>
+                    <Stack direction="row">
+                        <Typography variant="h4" sx={{ marginRight: "10px" }}>Posts</Typography>
+                        <Tooltip title="Create new post">
+                            <IconButton onClick={() => this.props.navigate('/admin/post')}>
+                                <MdAdd size="1.3em" />
+                            </IconButton>
+                        </Tooltip>
+                    </Stack>
                     <CustomTable
                         endPoint={ENDPOINT}
                         columns={this.state.columns}
@@ -112,3 +130,8 @@ export default class PostsPage extends React.Component<{}, State> {
     }
 }
 
+export default function PostsPage() {
+    const { t } = useTranslation();
+    const navigate = useNavigate();
+    return <InnerPostsPage navigate={navigate} t={t} />;
+}
