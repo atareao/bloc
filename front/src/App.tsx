@@ -12,11 +12,12 @@ import LanguageDetector from "i18next-browser-languagedetector";
 import Backend from "i18next-http-backend";
 import PublicLayout from "./layouts/public_layout";
 import AuthLayout from "./layouts/auth_layout";
-import ProtectedLayout from "./layouts/protected_layout";
-import LoginPage from "./pages/auth/login_page";
-import LogoutPage from "./pages/protected/logout_page";
+import AdminLayout from "./layouts/admin_layout";
+import LoginPage from "./pages/public/login_page";
 import HomePage from "./pages/public/home_page";
-import EditorPage from "./pages/public/editor_page";
+import LogoutPage from "./pages/admin/logout_page";
+import EditorPage from "./pages/admin/editor_page";
+import PostsPage from "./pages/admin/posts_page";
 
 import { AuthContextProvider } from "./components/auth_context";
 import "./App.css";
@@ -58,10 +59,11 @@ export default class App extends react.Component {
                             <Routes>
                                 <Route path="/" element={<PublicLayout />} >
                                     <Route index element={<HomePage />} />
-                                    <Route path="editor" element={<EditorPage />} />
                                 </Route>
-                                <Route path="/" element={<ProtectedLayout />} >
+                                <Route path="/admin" element={<AdminLayout />} >
                                     <Route path="logout" element={<LogoutPage />} />
+                                    <Route path="editor" element={<EditorPage />} />
+                                    <Route path="posts" element={<PostsPage />} />
                                 </Route>
                                 <Route path="/" element={<AuthLayout />} >
                                     <Route path="login" element={<LoginPage />} />

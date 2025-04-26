@@ -1,15 +1,23 @@
 import React from 'react';
 import { jwtDecode } from 'jwt-decode';
 
+declare module 'jwt-decode' {
+    export interface JwtPayload {
+        role: string
+    }
+}
+
 export interface AuthContextInterface {
     token: string | null
+    role: string | null
     isLoggedIn: boolean
     login: Function
     logout: Function
 }
 
 const AuthContext = React.createContext<AuthContextInterface>({
-    token: "",
+    token: null,
+    role: null,
     isLoggedIn: false,
     login: (token: string) => { console.log(`token: ${token}`) },
     logout: () => { }
@@ -22,6 +30,7 @@ interface AuthContextProviderProps {
 }
 
 interface AuthContextProviderState {
+    role: string | null
     token: string | null
     isLoggedIn: boolean
 }
@@ -34,16 +43,22 @@ export class AuthContextProvider extends React.Component<AuthContextProviderProp
         console.log("Constructing AuthContextProvider");
         super(props);
         this.logoutTimer = null;
+        let decoded = null;
         const tokenData = this.retrieveStoredToken();
-        if (tokenData) {
+        if (tokenData && tokenData.token) {
+            decoded = jwtDecode(tokenData.token);
+        }
+        if (tokenData && decoded) {
             this.state = {
-                token: tokenData.token ? tokenData.token : "",
-                isLoggedIn: true
+                token: tokenData.token,
+                role: decoded.role,
+                isLoggedIn: true,
             }
-        }else{
+        } else {
             this.state = {
+                role: null,
                 token: null,
-                isLoggedIn: false
+                isLoggedIn: true,
             }
         }
     }
@@ -63,7 +78,7 @@ export class AuthContextProvider extends React.Component<AuthContextProviderProp
         console.log("Retrieving stored token");
         const storedToken = localStorage.getItem("token");
         let expirationTime = 0;
-        if(storedToken) {
+        if (storedToken) {
             const decoded = jwtDecode(storedToken);
             expirationTime = decoded.exp ? decoded.exp : 0;
         }
@@ -82,11 +97,12 @@ export class AuthContextProvider extends React.Component<AuthContextProviderProp
     logoutHandler = () => {
         console.log("Logging out");
         this.setState({
+            token: null,
+            role: null,
             isLoggedIn: false,
-            token: null
         });
         localStorage.removeItem("token");
-        if(this.logoutTimer) {
+        if (this.logoutTimer) {
             clearTimeout(this.logoutTimer);
         }
         window.history.pushState({}, "", "/login");
@@ -103,15 +119,16 @@ export class AuthContextProvider extends React.Component<AuthContextProviderProp
         localStorage.setItem("token", token);
         const expirationTime = decoded.exp ? decoded.exp : 0;
         const remainingTime = this.calculateRemainingTime(expirationTime);
-        if(remainingTime <= 0) {
+        if (remainingTime <= 0) {
             console.log("Token has already expired");
             this.logoutHandler();
             return;
         }
         this.logoutTimer = setTimeout(this.logoutHandler, remainingTime); // that will log the user out when this timer expires
         this.setState({
+            token: token,
+            role: decoded.role,
             isLoggedIn: !!token,
-            token: token
         });
     }
 
@@ -120,6 +137,7 @@ export class AuthContextProvider extends React.Component<AuthContextProviderProp
         return (
             <AuthContext.Provider value={{
                 token: this.state.token,
+                role: this.state.role,
                 isLoggedIn: this.state.isLoggedIn,
                 login: this.loginHandler,
                 logout: this.logoutHandler

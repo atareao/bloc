@@ -89,7 +89,7 @@ export default class LoginPage extends React.Component<{}, LoginPageState> {
         console.log("Rendering login page");
         if (this.state.redirect) {
             return (
-                <Navigate to="/" />
+                <Navigate to="/admin/posts" />
             );
         } else {
             return (

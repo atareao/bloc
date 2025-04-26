@@ -8,6 +8,7 @@ pub struct User{
     pub username: String,
     pub email: String,
     pub hashed_password: String,
+    pub role: String,
     pub active: bool,
     created_at: DateTime<Utc>,
     updated_at: DateTime<Utc>,
@@ -16,6 +17,7 @@ pub struct User{
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TokenClaims {
     pub sub: String,
+    pub role: String,
     pub iat: usize,
     pub exp: usize,
 }
@@ -51,6 +53,7 @@ impl User{
             username: row.get("username"),
             email: row.get("email"),
             hashed_password: row.get("hashed_password"),
+            role: row.get("role"),
             active: row.get("active"),
             created_at: row.get("created_at"),
             updated_at: row.get("updated_at"),

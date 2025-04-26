@@ -6,3 +6,7 @@ CREATE TABLE IF NOT EXISTS topics (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+INSERT INTO topics (name, slug) VALUES
+('Default', 'default'),
+('Page', '');

@@ -1,5 +1,6 @@
 CREATE TABLE IF NOT EXISTS posts (
     id SERIAL PRIMARY KEY,
+    topic_id INTEGER NOT NULL,
     title VARCHAR NOT NULL UNIQUE,
     slug VARCHAR NOT NULL UNIQUE,
     status VARCHAR NOT NULL default 'draft',

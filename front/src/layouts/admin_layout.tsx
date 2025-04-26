@@ -2,9 +2,10 @@ import react from 'react';
 import { Navigate, Outlet } from 'react-router';
 import Container from '@mui/material/Container';
 import AuthContext from '../components/auth_context';
-import NavBar from '../components/nav_bar_protected';
+import NavBarAdmin from '../components/nav_bar_admin';
+import Sidebar from '../components/sidebar';
 
-export default class ProtectedLayout extends react.Component {
+export default class AdminLayout extends react.Component {
     static authContext = AuthContext;
     declare context: React.ContextType<typeof AuthContext>;
 
@@ -23,7 +24,8 @@ export default class ProtectedLayout extends react.Component {
         return (
             <>
                 <header>
-                    <NavBar />
+                    <NavBarAdmin />
+                    <Sidebar />
                 </header>
                 <main>
                     <Container>
@@ -36,6 +38,6 @@ export default class ProtectedLayout extends react.Component {
         );
     }
 }
-ProtectedLayout.contextType = AuthContext;
+AdminLayout.contextType = AuthContext;
 
 
