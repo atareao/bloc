@@ -26,3 +26,36 @@ export interface Value {
     updated_at?: Date
 }
 
+export interface Topic {
+    id?: number
+    name: string
+    slug: string
+    active: boolean
+    created_at?: Date
+    updated_at?: Date
+}
+
+export interface Tag {
+    id?: number
+    name: string
+    slug: string
+    active: boolean
+    created_at?: Date
+    updated_at?: Date
+}
+
+export interface Post {
+    id?: number
+    topic_id: number
+    title: string
+    slug: string
+    status: string
+    content: string
+    excerpt: string
+    user_id: number
+    comment_on: boolean
+    enclosure?: string
+    video?: string
+    created_at?: Date
+    updated_at?: Date
+}

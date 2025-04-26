@@ -1,6 +1,5 @@
 import * as React from "react";
 import { MdAdd, MdDelete, MdCancel, MdEdit } from "react-icons/md";
-import Button from '@mui/material/Button';
 import {
     MuiEvent,
     GridRowsProp,
@@ -11,7 +10,8 @@ import {
     GridRowModes,
     GridRowModel,
     GridPaginationModel,
-    GridToolbarContainer,
+    Toolbar,
+    ToolbarButton,
     GridRowEditStopReasons,
     GridCellEditStopParams,
     GridActionsCellItem,
@@ -145,6 +145,7 @@ export default class CustomTable extends React.Component<Props, State> {
                     slotProps={{
                         //toolbar: { setRows, this.setRowModesModel },
                     }}
+                    showToolbar
                 />
                 {!!this.state.snackbar && (
                     <Snackbar
@@ -189,9 +190,14 @@ export default class CustomTable extends React.Component<Props, State> {
         };
 
         return (
-            <GridToolbarContainer>
-                <Button color="primary" startIcon={<MdAdd />} onClick={handleClick}/ >
-            </GridToolbarContainer>
+            <Toolbar>
+                <ToolbarButton
+                    color="primary"
+                    onClick={handleClick}
+                >
+                    <MdAdd />
+                </ToolbarButton>
+            </Toolbar>
         );
     }
 
