@@ -10,12 +10,30 @@ import Button from '@mui/material/Button';
 import { useTranslation } from 'react-i18next';
 import { useColorScheme } from '@mui/material/styles';
 
+import { styled } from '@mui/material/styles';
+
+import { FaCaretLeft, FaCaretRight } from "react-icons/fa6";
+import IconButton from '@mui/material/IconButton';
+
+const DrawerHeader = styled('div')(({ theme }) => ({
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    padding: theme.spacing(0, 1),
+    // necessary for content to be below app bar
+    ...theme.mixins.toolbar,
+}));
+
 interface Props {
     t: any
     mode: any
 }
 
-export class InnerSidebar extends React.Component<Props> {
+interface State {
+    open: boolean
+}
+
+export class InnerSidebar extends React.Component<Props, State> {
 
     dataPages = [
         {
@@ -31,17 +49,31 @@ export class InnerSidebar extends React.Component<Props> {
 
     constructor(props: Props) {
         super(props);
+        this.state = {
+            open: true,
+        };
+    }
+
+    handleDrawerClose = () => {
+        const oldStatus = this.state.open;
+
+        this.setState({
+            open: !oldStatus,
+        });
     }
 
     render = () => {
-        const textColor = this.props.mode === "dark"?"white":"black";
+        const width = this.state.open ? 250 : 50;
+        const visiblity = this.state.open ? "visible" : "hidden";
+        console.log("State", this.state);
+        const textColor = this.props.mode === "dark" ? "white" : "black";
         return (
             <Drawer
                 sx={{
-                    width: 250,
+                    width: width,
                     flexShrink: 0,
                     '& .MuiDrawer-paper': {
-                        width: 250,
+                        width: width,
                         boxSizing: 'border-box',
                     },
                 }}
@@ -49,12 +81,20 @@ export class InnerSidebar extends React.Component<Props> {
                 anchor="left"
             >
                 <Toolbar />
-                <Box sx={{ overflow: 'auto' }}>
+                <DrawerHeader>
+                    <IconButton onClick={this.handleDrawerClose}>
+                        {this.state.open === true ? <FaCaretLeft /> : <FaCaretRight />}
+                    </IconButton>
+                </DrawerHeader>
+                <Box sx={{ 
+                        overflow: 'auto',
+                        visibility: visiblity,
+                }}>
                     <List>
                         {this.dataPages.map((page) => (
                             <ListItem key={page.name} disablePadding>
-                                <Link style={{width: "100%"}} to={page.navigateTo}>
-                                    <Button fullWidth sx={{color: textColor}} >
+                                <Link style={{ width: "100%" }} to={page.navigateTo}>
+                                    <Button fullWidth sx={{ color: textColor }} >
                                         {page.name}
                                     </Button>
                                 </Link>

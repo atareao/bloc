@@ -44,6 +44,7 @@ pub async fn login(State(app_state): State<Arc<AppState>>, Json(user_schema): Js
     let exp = (now + chrono::Duration::minutes(60)).timestamp() as usize;
     let claims: TokenClaims = TokenClaims {
         sub: user.email.to_string(),
+        role: user.role.to_string(),
         exp,
         iat,
     };
