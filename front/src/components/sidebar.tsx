@@ -1,6 +1,6 @@
 import * as React from 'react';
 import Drawer from '@mui/material/Drawer';
-import { Link } from 'react-router';
+import { useNavigate } from 'react-router';
 import List from '@mui/material/List';
 import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
@@ -27,6 +27,7 @@ const DrawerHeader = styled('div')(({ theme }) => ({
 interface Props {
     t: any
     mode: any
+    navigate: any
 }
 
 interface State {
@@ -35,17 +36,6 @@ interface State {
 
 export class InnerSidebar extends React.Component<Props, State> {
 
-    dataPages = [
-        {
-            "name": this.props.t("Home"),
-            "navigateTo": "/admin/",
-
-        },
-        {
-            "name": this.props.t("Posts"),
-            "navigateTo": "/admin/posts",
-        },
-    ];
 
     constructor(props: Props) {
         super(props);
@@ -62,6 +52,45 @@ export class InnerSidebar extends React.Component<Props, State> {
         });
     }
 
+    handleNone = () => {
+        console.log("None");
+    }
+
+    handleCreateTopic = () => {
+        console.log("Creating topic");
+        this.props.t("Creating topic");
+    }
+
+    handleGoTo = (page: string) => {
+        console.log("Going to", page);
+        this.props.t("Going to", { page: page });
+    }
+
+    dataPages = [
+        {
+            name: this.props.t("Home"),
+            action: () => {this.props.navigate("/admin/home");},
+        },
+        {
+            name: this.props.t("Topics"),
+            action: this.handleNone,
+            "navigateTo": "/admin/topics",
+        },
+        {
+            name: this.props.t("Posts"),
+            action: () => {this.props.navigate("/admin/posts");},
+        },
+        {
+            name: this.props.t("Create topic"),
+            action: this.handleCreateTopic,
+            "navigateTo": "/admin/topics/create",
+        },
+        {
+            name: this.props.t("Create post"),
+            action: this.handleNone,
+            "navigateTo": "/admin/topics/create",
+        }
+    ];
     render = () => {
         const width = this.state.open ? 250 : 50;
         const visiblity = this.state.open ? "visible" : "hidden";
@@ -93,11 +122,13 @@ export class InnerSidebar extends React.Component<Props, State> {
                     <List>
                         {this.dataPages.map((page) => (
                             <ListItem key={page.name} disablePadding>
-                                <Link style={{ width: "100%" }} to={page.navigateTo}>
-                                    <Button fullWidth sx={{ color: textColor }} >
-                                        {page.name}
-                                    </Button>
-                                </Link>
+                                <Button
+                                    fullWidth
+                                    sx={{ color: textColor }}
+                                    onClick={page.action}
+                                >
+                                    {page.name}
+                                </Button>
                             </ListItem>
                         ))}
                     </List>
@@ -108,8 +139,9 @@ export class InnerSidebar extends React.Component<Props, State> {
     }
 }
 export default function Sidebar() {
+    const navigate = useNavigate();
     const { t } = useTranslation();
     const { mode } = useColorScheme();
-    return <InnerSidebar t={t} mode={mode} />;
+    return <InnerSidebar t={t} mode={mode} navigate={navigate} />;
 }
 

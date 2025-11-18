@@ -7,6 +7,8 @@ CREATE TABLE IF NOT EXISTS posts (
     content TEXT NOT NULL default '',
     excerpt TEXT NOT NULL default '',
     user_id INTEGER NOT NULL,
+    podcast_url VARCHAR,
+    video_url VARCHAR,
     comment_on boolean DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP

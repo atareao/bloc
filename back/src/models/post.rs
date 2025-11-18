@@ -6,14 +6,14 @@ use sqlx::{postgres::{PgPool, PgRow}, query, Row, Error};
 pub struct NewPost{
     pub topic_id: i32,
     pub title: String,
-    pub slug: String,
-    pub status: String,
-    pub content: String,
-    pub excerpt: String,
+    pub slug: Option<String>,
+    pub status: Option<String>,
+    pub content: Option<String>,
+    pub excerpt: Option<String>,
     pub user_id: i32,
     pub comment_on: bool,
-    pub enclosure: Option<String>,
-    pub video: Option<String>,
+    pub podcast_url: Option<String>,
+    pub video_url: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -27,8 +27,8 @@ pub struct Post{
     pub excerpt: String,
     pub user_id: i32,
     pub comment_on: bool,
-    pub enclosure: Option<String>,
-    pub video: Option<String>,
+    pub podcast_url: Option<String>,
+    pub video_url: Option<String>,
     created_at: DateTime<Utc>,
     updated_at: DateTime<Utc>,
 }
@@ -45,8 +45,8 @@ impl Post{
             excerpt: row.get("excerpt"),
             user_id: row.get("user_id"),
             comment_on: row.get("comment_on"),
-            enclosure: row.get("enclosure"),
-            video: row.get("video"),
+            podcast_url: row.get("podcast_url"),
+            video_url: row.get("video_url"),
             created_at: row.get("created_at"),
             updated_at: row.get("updated_at"),
         }
@@ -63,8 +63,8 @@ impl Post{
                 excerpt, 
                 user_id,
                 comment_on,
-                enclosure,
-                video,
+                podcast_url,
+                video_url,
                 created_at,
                 updated_at
             )
@@ -80,8 +80,8 @@ impl Post{
             .bind(&post.excerpt)
             .bind(post.user_id)
             .bind(post.comment_on)
-            .bind(&post.enclosure)
-            .bind(&post.video)
+            .bind(&post.podcast_url)
+            .bind(&post.video_url)
             .bind(now)
             .bind(now)
             .map(Self::from_row)
@@ -99,8 +99,8 @@ impl Post{
                 excerpt = $6,
                 user_id = $7,
                 comment_on = $8,
-                enclosure = $9,
-                video = $10,
+                podcast_url = $9,
+                video_url = $10,
                 updated_at = $11
             WHERE
                 id = $12
@@ -114,8 +114,8 @@ impl Post{
             .bind(&post.excerpt)
             .bind(post.user_id)
             .bind(post.comment_on)
-            .bind(&post.enclosure)
-            .bind(&post.video)
+            .bind(&post.podcast_url)
+            .bind(&post.video_url)
             .bind(now)
             .bind(post.id)
             .map(Self::from_row)
