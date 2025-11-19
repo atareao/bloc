@@ -4,7 +4,6 @@ use serde_json::Value;
 #[derive(Debug, Clone)]
 pub enum Data {
     None,
-    One(Value),
     Some(Vec<Value>),
 }
 
@@ -15,7 +14,6 @@ impl Serialize for Data {
     {
         match self {
             Data::None => serializer.serialize_none(),
-            Data::One(value) => serializer.serialize_some(value),
             Data::Some(values) => serializer.serialize_some(values),
         }
     }
