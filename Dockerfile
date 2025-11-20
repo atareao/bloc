@@ -1,19 +1,20 @@
 ###############################################################################
 ## Client builder
 ###############################################################################
-FROM node:21-slim AS client-builder
+FROM node:22-slim AS client-builder
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
 WORKDIR /client-builder
 COPY ./front .
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    CI=true pnpm install --frozen-lockfile
 RUN pnpm run build
 
 ###############################################################################
 ## Server builder
 ###############################################################################
-FROM rust:alpine3.21 AS server-builder
+FROM rust:alpine3.22 AS server-builder
 RUN apk add --update --no-cache \
             autoconf \
             gcc \
@@ -32,23 +33,24 @@ RUN apk add --update --no-cache \
 
 WORKDIR /server-builder
 COPY ./back .
+ENV OPENSSL_LIB_DIR=/usr/lib \
+    OPENSSL_STATIC=1
 RUN cargo build --release --locked
 
 ###############################################################################
 ## Final image
 ###############################################################################
-FROM alpine:3.21
+FROM alpine:3.22
 
 ENV USER=app \
     UID=1000
 
 RUN apk add --update --no-cache \
-            tzdata~=2025 \
-            sqlite~=3.48 && \
+            font-noto-emoji~=2 \
+            fontconfig~=2.15 && \
     rm -rf /var/cache/apk && \
     rm -rf /var/lib/app/lists && \
-    mkdir -p /app/db && \
-    mkdir -p /app/rss
+    mkdir -p /app/static
 # Copy our build
 COPY --from=server-builder /server-builder/target/release/back /app
 COPY --from=client-builder /client-builder/dist/ /app/static/
@@ -69,4 +71,3 @@ USER app
 EXPOSE 3000
 
 CMD [ "/app/back" ]
-
