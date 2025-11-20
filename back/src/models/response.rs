@@ -8,8 +8,7 @@ use axum::{
     }
 };
 use serde::Serialize;
-
-use super::Data;
+use serde_json::Value;
 
 #[derive(Debug, Clone)]
 pub enum CustomResponse {
@@ -44,18 +43,18 @@ impl IntoResponse for EmptyResponse {
 pub struct ApiResponse {
     pub status: u16,
     pub message: String,
-    pub data: Data,
+    pub data: Option<Value>,
 }
 
 impl ApiResponse {
-    pub fn new(status: StatusCode, message: &str, data: Data) -> Self {
+    pub fn new(status: StatusCode, message: &str, data: Option<Value>) -> Self {
         Self {
             status: status.as_u16(),
             message: message.to_string(),
             data,
         }
     }
-    pub fn create(status: StatusCode, message: &str, data: Data) -> Json<ApiResponse> {
+    pub fn create(status: StatusCode, message: &str, data: Option<Value>) -> Json<ApiResponse> {
         Json(ApiResponse::new(status, message, data))
     }
 }
@@ -86,12 +85,12 @@ pub struct Pagination {
 pub struct PagedResponse {
     pub status: u16,
     pub message: String,
-    pub data: Data,
+    pub data: Option<Value>,
     pub pagination: Pagination,
 }
 
 impl PagedResponse {
-    pub fn new(status: StatusCode, message: &str, data: Data, pagination: Pagination) -> Self {
+    pub fn new(status: StatusCode, message: &str, data: Option<Value>, pagination: Pagination) -> Self {
         Self {
             status: status.as_u16(),
             message: message.to_string(),
@@ -99,7 +98,7 @@ impl PagedResponse {
             pagination,
         }
     }
-    pub fn create(status: StatusCode, message: &str, data: Data, pagination: Pagination) -> Json<PagedResponse> {
+    pub fn create(status: StatusCode, message: &str, data: Option<Value>, pagination: Pagination) -> Json<PagedResponse> {
         Json(PagedResponse::new(status, message, data, pagination))
     }
 }

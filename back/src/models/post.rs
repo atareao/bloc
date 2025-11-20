@@ -1,41 +1,48 @@
 use serde::{Serialize, Deserialize};
 use chrono::{DateTime, Utc};
 use sqlx::{postgres::{PgPool, PgRow}, query, Row, Error};
+use tracing::debug;
+use std::str::FromStr;
+
+use crate::constants::{DEFAULT_LIMIT, DEFAULT_PAGE};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct NewPost{
-    pub topic_id: i32,
+    pub class: String,
+    pub parent_id: Option<i32>,
     pub title: Option<String>,
     pub slug: Option<String>,
-    pub status: Option<String>,
     pub content: Option<String>,
     pub excerpt: Option<String>,
     pub user_id: i32,
     pub comment_on: Option<bool>,
+    pub private: Option<bool>,
     pub audio_url: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Post{
     id: i32,
-    pub topic_id: i32,
+    pub class: String,
+    pub parent_id: Option<i32>,
     pub title: String,
     pub slug: String,
-    pub status: String,
-    pub content: String,
-    pub excerpt: String,
+    pub content: Option<String>,
+    pub excerpt: Option<String>,
     pub user_id: i32,
-    pub comment_on: bool,
+    pub comment_on: Option<bool>,
+    pub private: Option<bool>,
     pub audio_url: Option<String>,
-    created_at: DateTime<Utc>,
-    updated_at: DateTime<Utc>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct ReadPostParams {
-    pub id: Option<i32>,
+    pub id: Option<String>,
+    pub parent_id: Option<String>,
+    pub class: Option<String>,
     pub title: Option<String>,
-    pub topic_id: Option<i32>,
     pub user_id: Option<String>,
     pub page: Option<u32>,
     pub limit: Option<u32>,
@@ -47,14 +54,15 @@ impl Post{
     fn from_row(row: PgRow) -> Self{
         Self{
             id: row.get("id"),
-            topic_id: row.get("topic_id"),
+            class: row.get("class"),
+            parent_id: row.get("parent_id"),
             title: row.get("title"),
             slug: row.get("slug"),
-            status: row.get("status"),
             content: row.get("content"),
             excerpt: row.get("excerpt"),
             user_id: row.get("user_id"),
             comment_on: row.get("comment_on"),
+            private: row.get("private"),
             audio_url: row.get("audio_url"),
             created_at: row.get("created_at"),
             updated_at: row.get("updated_at"),
@@ -64,14 +72,15 @@ impl Post{
     pub async fn create(pool: &PgPool, post: &NewPost) -> Result<Post, Error> {
         let now = Utc::now();
         let sql = "INSERT INTO posts (
-                topic_id,
+                class,
+                parent_id,
                 title,
                 slug,
-                status,
                 content,
                 excerpt, 
                 user_id,
                 comment_on,
+                private,
                 audio_url,
                 created_at,
                 updated_at
@@ -80,14 +89,15 @@ impl Post{
                 $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
             ) RETURNING *";
         query(sql)
-            .bind(post.topic_id)
+            .bind(&post.class)
+            .bind(post.parent_id)
             .bind(&post.title)
             .bind(&post.slug)
-            .bind(&post.status)
             .bind(&post.content)
             .bind(&post.excerpt)
             .bind(post.user_id)
             .bind(post.comment_on)
+            .bind(post.private)
             .bind(&post.audio_url)
             .bind(now)
             .bind(now)
@@ -98,28 +108,31 @@ impl Post{
 
     pub async fn update(pool: &PgPool, post: &Post) -> Result<Post, Error> {
         let sql = "UPDATE posts set 
-                post_id = $1,
-                title = $2,
-                slug = $3,
-                status = $4,
+                class = $1
+                parent_id = $2,
+                title = $3,
+                slug = $4,
                 content = $5,
                 excerpt = $6,
                 user_id = $7,
                 comment_on = $8,
-                audio_url = $9,
-                updated_at = $10
+                private = $9
+                audio_url = $10,
+                updated_at = $11
             WHERE
-                id = $11
+                id = $12
             RETURNING *"; 
         let now = Utc::now();
         query(sql)
+            .bind(&post.class)
+            .bind(post.parent_id)
             .bind(&post.title)
             .bind(&post.slug)
-            .bind(&post.status)
             .bind(&post.content)
             .bind(&post.excerpt)
             .bind(post.user_id)
             .bind(post.comment_on)
+            .bind(post.private)
             .bind(&post.audio_url)
             .bind(now)
             .bind(post.id)
@@ -146,14 +159,11 @@ impl Post{
     }
 
     pub async fn count_paged(pool: &PgPool, params: &ReadPostParams) -> Result<i64, Error> {
-        let title_str = params.title.clone();
-        let topic_id_str = params.topic_id.map(|v| v.to_string());
-        let user_id_str = params.user_id.clone();
-
         let filters = vec![
-            ("title", &element_type_str),
-            ("topic_id", &preemer_point_str),
-            ("user_id", &params.name),
+            ("class", &params.class),
+            ("parent_id", &params.parent_id),
+            ("title", &params.title),
+            ("user_id", &params.user_id),
         ];
         let active_filters: Vec<(&str, String)> = filters
             .into_iter()
@@ -170,7 +180,7 @@ impl Post{
         }
         let mut query = query(&sql);
         for (col, val) in active_filters {
-            if col == "topic_id"  || col == "user_id" {
+            if col == "parent_id"  || col == "user_id" {
                 let value: i32 = FromStr::from_str(val.as_str()).unwrap();
                 query = query.bind(value);
             }else{
@@ -187,14 +197,11 @@ impl Post{
     }
 
     pub async fn read_paged(pool: &PgPool, params: &ReadPostParams) -> Result<Vec<Post>, Error> {
-        let township_id_str = params.township_id.map(|v| v.to_string());
-        let element_type_str = params.element_type_id.map(|v| v.to_string());
-        let preemer_point_str = params.preemer_point_id.map(|v| v.to_string());
-
         let filters = vec![
-            ("title", &element_type_str),
-            ("topic_id", &preemer_point_str),
-            ("user_id", &params.name),
+            ("class", &params.class),
+            ("parent_id", &params.parent_id),
+            ("title", &params.title),
+            ("user_id", &params.user_id),
         ];
         let active_filters: Vec<(&str, String)> = filters
             .into_iter()
@@ -203,7 +210,7 @@ impl Post{
         let mut sql = "SELECT * FROM posts WHERE 1=1".to_string();
         for (i, (col, _)) in active_filters.iter().enumerate() {
             let param_index = i + 1;
-            if *col == "topic_id"  || *col == "user_id" {
+            if *col == "parent_id"  || *col == "user_id" {
                 sql.push_str(&format!(" AND {} = ${}", col, param_index));
             }else{
                 sql.push_str(&format!(" AND {} LIKE ${}", col, param_index));
@@ -213,8 +220,9 @@ impl Post{
         let offset_index = limit_index + 1;
         if let Some(sort_by) = params.sort_by.as_ref()
             && [
+                "class",
+                "parent_id",
                 "title",
-                "topic_id",
                 "user_id",
             ]
             .contains(&sort_by.as_str())
@@ -245,36 +253,6 @@ impl Post{
             .fetch_all(pool)
             .await
     }
-
-
-    pub async fn read_all_for_topic(pool: &PgPool, topic_id: i32) -> Result<Vec<Post>, Error> {
-        let sql = "SELECT * FROM posts WHERE topic_id = $1";
-        query(sql)
-            .bind(topic_id)
-            .map(Self::from_row)
-            .fetch_all(pool)
-            .await
-    }
-
-    pub async fn read_all_for_user(pool: &PgPool, user_id: i32) -> Result<Vec<Post>, Error> {
-        let sql = "SELECT * FROM posts WHERE user_id = $1";
-        query(sql)
-            .bind(user_id)
-            .map(Self::from_row)
-            .fetch_all(pool)
-            .await
-    }
-
-    pub async fn read_all_for_user_and_topic(pool: &PgPool, user_id: i32, topic_id: i32) -> Result<Vec<Post>, Error> {
-        let sql = "SELECT * FROM posts WHERE user_id = $1 AND topic_id = $2";
-        query(sql)
-            .bind(user_id)
-            .bind(topic_id)
-            .map(Self::from_row)
-            .fetch_all(pool)
-            .await
-    }
-
 
     pub async fn delete(pool: &PgPool, post: &Post) -> Result<Post, Error> {
         let sql = "DELETE FROM posts WHERE id = $1 RETURNING *";

@@ -1,14 +1,15 @@
 CREATE TABLE IF NOT EXISTS posts (
     id SERIAL PRIMARY KEY,
-    topic_id INTEGER NOT NULL,
-    title VARCHAR NOT NULL UNIQUE,
+    class VARCHAR NOT NULL,
+    parent_id INTEGER,
+    title VARCHAR NOT NULL,
     slug VARCHAR NOT NULL UNIQUE,
-    status VARCHAR NOT NULL default 'draft',
-    content TEXT NOT NULL default '',
-    excerpt TEXT NOT NULL default '',
+    content TEXT DEFAULT '',
+    excerpt TEXT DEFAULT '',
     user_id INTEGER NOT NULL,
-    audio_url VARCHAR,
     comment_on boolean DEFAULT FALSE,
+    private boolean DEFAULT TRUE,
+    audio_url VARCHAR,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );

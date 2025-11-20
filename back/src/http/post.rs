@@ -8,7 +8,7 @@ use axum::{
 };
 use tracing::{debug, error};
 
-use crate::models::{ApiResponse, AppState, Data, Post, NewPost};
+use crate::models::{ApiResponse, AppState, Post, NewPost};
 
 pub fn post_router() -> Router<Arc<AppState>> {
     Router::new()
@@ -28,11 +28,14 @@ pub async fn create(
     match Post::create(&app_state.pool, &post).await {
         Ok(post) => {
             debug!("Post created: {:?}", post);
-            ApiResponse::new(StatusCode::CREATED, "Post created", Data::One(serde_json::to_value(post).unwrap()))
+            ApiResponse::new(
+                StatusCode::CREATED, 
+                "Created", 
+                Some(serde_json::to_value(post).unwrap()))
         },
         Err(e) => {
             error!("Error creating post: {:?}", e);
-            ApiResponse::new(StatusCode::BAD_REQUEST, "Error creating poste", Data::None)
+            ApiResponse::new(StatusCode::BAD_REQUEST, "Error creating poste", None)
         }
     }
 }
@@ -45,11 +48,11 @@ pub async fn update(
     match Post::update(&app_state.pool, &post).await {
         Ok(post) => {
             debug!("Post updated: {:?}", post);
-            ApiResponse::new(StatusCode::OK, "Post updated", Data::One(serde_json::to_value(post).unwrap()))
+            ApiResponse::new(StatusCode::OK, "Post updated", Some(serde_json::to_value(post).unwrap()))
         },
         Err(e) => {
             error!("Error updating post: {:?}", e);
-            ApiResponse::new(StatusCode::BAD_REQUEST, "Error updating post", Data::None)
+            ApiResponse::new(StatusCode::BAD_REQUEST, "Error updating post", None)
         }
     }
 }
@@ -67,25 +70,22 @@ pub async fn read(
         match Post::read(&app_state.pool, post_id).await {
             Ok(posts) => {
                 debug!("Posts: {:?}", posts);
-                ApiResponse::new(StatusCode::OK, "Posts", Data::One(serde_json::to_value(posts).unwrap()))
+                ApiResponse::new(StatusCode::OK, "Posts", Some(serde_json::to_value(posts).unwrap()))
             },
             Err(e) => {
                 error!("Error reading posts: {:?}", e);
-                ApiResponse::new(StatusCode::BAD_REQUEST, "Error reading posts", Data::None)
+                ApiResponse::new(StatusCode::BAD_REQUEST, "Error reading posts", None)
             }
         }
     }else{
         match Post::read_all(&app_state.pool).await {
             Ok(posts) => {
                 debug!("Posts: {:?}", posts);
-                let values = posts.into_iter().map(|t| {
-                    serde_json::to_value(t).unwrap()
-                }).collect::<Vec<_>>();
-                ApiResponse::new(StatusCode::OK, "Posts", Data::Some(values))
+                ApiResponse::new(StatusCode::OK, "Posts", Some(serde_json::to_value(posts).unwrap()))
             },
             Err(e) => {
                 error!("Error reading posts: {:?}", e);
-                ApiResponse::new(StatusCode::BAD_REQUEST, "Error reading posts", Data::None)
+                ApiResponse::new(StatusCode::BAD_REQUEST, "Error reading posts", None)
             }
         }
     }
@@ -99,11 +99,11 @@ pub async fn delete(
     match Post::delete(&app_state.pool, &post).await {
         Ok(post) => {
             debug!("Post deleted: {:?}", post);
-            ApiResponse::new(StatusCode::OK, "Post deleted", Data::One(serde_json::to_value(post).unwrap()))
+            ApiResponse::new(StatusCode::OK, "Post deleted", Some(serde_json::to_value(post).unwrap()))
         },
         Err(e) => {
             error!("Error deleting post: {:?}", e);
-            ApiResponse::new(StatusCode::BAD_REQUEST, "Error deleting post", Data::None)
+            ApiResponse::new(StatusCode::BAD_REQUEST, "Error deleting post", None)
         }
     }
 }

@@ -13,7 +13,7 @@ use tracing::{debug, error};
 use axum_extra::extract::cookie::{Cookie, SameSite};
 use jsonwebtoken::{encode, EncodingKey, Header};
 
-use crate::models::{ApiResponse, AppState, Data, TokenClaims, User, UserSchema, UserRegister};
+use crate::models::{ApiResponse, AppState, TokenClaims, User, UserSchema, UserRegister};
 
 pub fn user_router() -> Router<Arc<AppState>> {
     Router::new()
@@ -32,11 +32,11 @@ pub async fn login(State(app_state): State<Arc<AppState>>, Json(user_schema): Js
         .await
         .map_err(|e| {
             let message = &format!("Error: {}", e);
-            ApiResponse::new(StatusCode::FORBIDDEN, message, Data::None)
+            ApiResponse::new(StatusCode::FORBIDDEN, message, None)
         })?;
     if !user.active || !verify(&user_schema.password, &user.hashed_password).unwrap() {
         let message = "Invalid name or password. Please <a href='/login'>log in</a>";
-        return Err(ApiResponse::new(StatusCode::FORBIDDEN, message, Data::None));
+        return Err(ApiResponse::new(StatusCode::FORBIDDEN, message, None));
     }
 
     let now = chrono::Utc::now();
@@ -56,11 +56,11 @@ pub async fn login(State(app_state): State<Arc<AppState>>, Json(user_schema): Js
     )
     .map_err(|e| {
         let message = format!("Encoding JWT error: {}", e);
-        ApiResponse::new(StatusCode::INTERNAL_SERVER_ERROR, &message, Data::None)
+        ApiResponse::new(StatusCode::INTERNAL_SERVER_ERROR, &message, None)
     })
     .map(|token| {
         let value = serde_json::json!({"token": token});
-        ApiResponse::new(StatusCode::OK, "Ok", Data::One(value))
+        ApiResponse::new(StatusCode::OK, "Ok", Some(value))
     })
 }
 
@@ -72,11 +72,11 @@ pub async fn register(
     match User::create(&app_state.pool, &user_data.username, &user_data.email, &user_data.password).await {
         Ok(user) => {
             debug!("User created: {:?}", user);
-            ApiResponse::new(StatusCode::CREATED, "User created", Data::One(serde_json::to_value(user).unwrap()))
+            ApiResponse::new(StatusCode::CREATED, "User created", Some(serde_json::to_value(user).unwrap()))
         },
         Err(e) => {
             error!("Error creating user: {:?}", e);
-            ApiResponse::new(StatusCode::BAD_REQUEST, "Error creating user", Data::None)
+            ApiResponse::new(StatusCode::BAD_REQUEST, "Error creating user", None)
         }
     }
 }
