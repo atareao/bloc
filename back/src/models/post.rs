@@ -254,6 +254,17 @@ impl Post{
             .await
     }
 
+    pub async fn read_tags_for_post(pool: &PgPool, post_id: i32) -> Result<Vec<Post>, Error> {
+        let sql = "SELECT t.* FROM posts t
+            JOIN post_tags pt ON t.id = pt.tag_id
+            WHERE pt.post_id = $1";
+        query(sql)
+            .bind(post_id)
+            .map(Self::from_row)
+            .fetch_all(pool)
+            .await
+    }
+
     pub async fn delete(pool: &PgPool, post: &Post) -> Result<Post, Error> {
         let sql = "DELETE FROM posts WHERE id = $1 RETURNING *";
         query(sql)
