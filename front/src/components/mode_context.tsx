@@ -1,12 +1,12 @@
 import React from 'react';
 
 export interface ModeContextInterface {
-    isDark: boolean
-    toggleMode: Function
+    isDarkMode: boolean;
+    toggleMode: Function;
 }
 
 const ModeContext = React.createContext<ModeContextInterface>({
-    isDark: true,
+    isDarkMode: true,
     toggleMode: Function,
 });
 
@@ -16,7 +16,7 @@ interface Props {
 }
 
 interface State {
-    isDark: boolean
+    isDarkMode: boolean;
 }
 
 export class ModeContextProvider extends React.Component<Props, State> {
@@ -25,7 +25,7 @@ export class ModeContextProvider extends React.Component<Props, State> {
         console.log("Constructing AuthContextProvider");
         super(props);
         this.state = {
-            isDark: this.retrieveMode()
+            isDarkMode: this.retrieveMode()
         }
     }
 
@@ -35,21 +35,22 @@ export class ModeContextProvider extends React.Component<Props, State> {
         if (mode === undefined || mode === null) {
             return true;
         }
-        return "dark" === mode;
+        return mode == "dark";
     }
 
     toggleMode = () => {
-        console.log("Toggling mode");
-        const isDark = !this.state.isDark;
-        this.setState({ isDark: isDark });
-        localStorage.setItem("mode", isDark ? "dark" : "light");
+        const oldState = this.state.isDarkMode;
+        const newState = !this.state.isDarkMode;
+        this.setState({ isDarkMode:  newState});
+        localStorage.setItem("mode", newState?"dark":"light");
+        console.log(`Change isDarkMode from ${oldState} to ${newState}`);
     }
 
     render() {
-        console.log(`Rendering ModeContextProvider ${this.state.isDark}`);
+        console.log(`Rendering ModeContextProvider ${this.state.isDarkMode}`);
         return (
             <ModeContext.Provider value={{
-                isDark: this.state.isDark,
+                isDarkMode: this.state.isDarkMode,
                 toggleMode: this.toggleMode,
             }}>
                 {this.props.children}
@@ -58,4 +59,6 @@ export class ModeContextProvider extends React.Component<Props, State> {
     }
 }
 export default ModeContext;
+
+
 

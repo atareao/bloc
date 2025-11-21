@@ -43,6 +43,7 @@ use std::{
 use http::{
     health_router,
     user_router,
+    api_user_router,
     post_router,
 };
 use dotenv::dotenv;
@@ -96,6 +97,7 @@ async fn main() -> Result<(), Error> {
     let api_routes = Router::new()
         .nest("/health", health_router())
         .nest("/auth", user_router())
+        .nest("/users", api_user_router())
         .nest("/posts", post_router())
         .with_state(Arc::new(AppState {
             pool,

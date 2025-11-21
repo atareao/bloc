@@ -3,6 +3,7 @@ use chrono::{DateTime, Utc};
 use sqlx::{postgres::{PgPool, PgRow}, query, Row, Error};
 use tracing::debug;
 use std::str::FromStr;
+use slug::slugify;
 
 use crate::constants::{DEFAULT_LIMIT, DEFAULT_PAGE};
 
@@ -69,7 +70,10 @@ impl Post{
         }
     }
 
-    pub async fn create(pool: &PgPool, post: &NewPost) -> Result<Post, Error> {
+    pub async fn create(pool: &PgPool, post: &mut NewPost) -> Result<Post, Error> {
+        if post.slug.is_none() {
+            post.slug = post.title.as_ref().map(slugify);
+        }
         let now = Utc::now();
         let sql = "INSERT INTO posts (
                 class,
@@ -86,7 +90,7 @@ impl Post{
                 updated_at
             )
             VALUES (
-                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
             ) RETURNING *";
         query(sql)
             .bind(&post.class)
@@ -106,9 +110,10 @@ impl Post{
             .await
     }
 
-    pub async fn update(pool: &PgPool, post: &Post) -> Result<Post, Error> {
+    pub async fn update(pool: &PgPool, post: &mut Post) -> Result<Post, Error> {
+        post.slug = slugify(post.title.clone());
         let sql = "UPDATE posts set 
-                class = $1
+                class = $1,
                 parent_id = $2,
                 title = $3,
                 slug = $4,
@@ -116,7 +121,7 @@ impl Post{
                 excerpt = $6,
                 user_id = $7,
                 comment_on = $8,
-                private = $9
+                private = $9,
                 audio_url = $10,
                 updated_at = $11
             WHERE
@@ -150,6 +155,15 @@ impl Post{
             .await
     }
 
+    pub async fn read_all_for_class(pool: &PgPool, class: &str) -> Result<Vec<Post>, Error> {
+        let sql = "SELECT * FROM posts WHERE class = $1";
+        query(sql)
+            .bind(class)
+            .map(Self::from_row)
+            .fetch_all(pool)
+            .await
+    }
+
     pub async fn read_all(pool: &PgPool) -> Result<Vec<Post>, Error> {
         let sql = "SELECT * FROM posts";
         query(sql)
@@ -157,6 +171,7 @@ impl Post{
             .fetch_all(pool)
             .await
     }
+
 
     pub async fn count_paged(pool: &PgPool, params: &ReadPostParams) -> Result<i64, Error> {
         let filters = vec![
@@ -265,10 +280,10 @@ impl Post{
             .await
     }
 
-    pub async fn delete(pool: &PgPool, post: &Post) -> Result<Post, Error> {
+    pub async fn delete(pool: &PgPool, post_id: i32) -> Result<Post, Error> {
         let sql = "DELETE FROM posts WHERE id = $1 RETURNING *";
         query(sql)
-            .bind(post.id)
+            .bind(post_id)
             .map(Self::from_row)
             .fetch_one(pool)
             .await

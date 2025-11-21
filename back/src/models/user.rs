@@ -4,7 +4,7 @@ use sqlx::{postgres::{PgPool, PgRow}, query, Row, Error};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct User{
-    id: i32,
+    pub id: i32,
     pub username: String,
     pub email: String,
     pub hashed_password: String,
@@ -18,6 +18,7 @@ pub struct User{
 pub struct TokenClaims {
     pub sub: String,
     pub role: String,
+    pub user_id: i32,
     pub iat: usize,
     pub exp: usize,
 }
@@ -33,6 +34,7 @@ pub struct UserRegister {
     pub username: String,
     pub email: String,
     pub password: String,
+    pub role: String,
 }
 
 #[derive(Debug, Serialize)]
@@ -60,14 +62,15 @@ impl User{
         }
     }
 
-    pub async fn create(pool: &PgPool, username: &str, email: &str, password: &str) -> Result<User, Error> {
+    pub async fn create(pool: &PgPool, username: &str, email: &str, password: &str, role: &str) -> Result<User, Error> {
         let hashed_password = bcrypt::hash(password, bcrypt::DEFAULT_COST).unwrap();
 
-        let sql = "INSERT INTO users (username, email, hashed_password) VALUES ($1, $2, $3) RETURNING *";
+        let sql = "INSERT INTO users (username, email, hashed_password, role) VALUES ($1, $2, $3, $4) RETURNING *";
         query(sql)
             .bind(username)
             .bind(email)
             .bind(hashed_password)
+            .bind(role)
             .map(Self::from_row)
             .fetch_one(pool)
             .await
@@ -78,6 +81,22 @@ impl User{
         query(sql)
             .bind(email)
             .map(Self::from_row)
+            .fetch_one(pool)
+            .await
+    }
+
+    pub async fn read_all(pool: &PgPool) -> Result<Vec<User>, Error> {
+        let sql = "SELECT * FROM users";
+        query(sql)
+            .map(Self::from_row)
+            .fetch_all(pool)
+            .await
+    }
+
+    pub async fn any_user_exists(pool: &PgPool) -> Result<bool, Error> {
+        let sql = "SELECT EXISTS(SELECT 1 FROM users)";
+        query(sql)
+            .map(|row: PgRow| row.get::<bool, _>(0))
             .fetch_one(pool)
             .await
     }

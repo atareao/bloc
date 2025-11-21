@@ -22,7 +22,28 @@ pub fn user_router() -> Router<Arc<AppState>> {
         .route("/register", routing::post(register))
 }
 
+pub fn api_user_router() -> Router<Arc<AppState>> {
+    Router::new()
+        .route("/", routing::get(read))
+        .route("/any", routing::get(any_user_exists))
+}
+
+
 type Result = std::result::Result<ApiResponse, ApiResponse>;
+
+pub async fn any_user_exists(State(app_state): State<Arc<AppState>>) -> impl IntoResponse {
+    match User::any_user_exists(&app_state.pool).await {
+        Ok(exists) => {
+            debug!("Any user exists: {:?}", exists);
+            let value = serde_json::json!({ "any_user_exists": exists });
+            ApiResponse::new(StatusCode::OK, "Ok", Some(value))
+        }
+        Err(e) => {
+            error!("Error checking if any user exists: {:?}", e);
+            ApiResponse::new(StatusCode::BAD_REQUEST, "Error checking if any user exists",None)
+        }
+    }
+}
 
 pub async fn login(State(app_state): State<Arc<AppState>>, Json(user_schema): Json<UserSchema>) -> Result {
     //) -> Result<Json<serde_json::Value>,(StatusCode, Json<serde_json::Value>)>{
@@ -45,6 +66,7 @@ pub async fn login(State(app_state): State<Arc<AppState>>, Json(user_schema): Js
     let claims: TokenClaims = TokenClaims {
         sub: user.email.to_string(),
         role: user.role.to_string(),
+        user_id: user.id,
         exp,
         iat,
     };
@@ -69,7 +91,7 @@ pub async fn register(
     Json(user_data): Json<UserRegister>,
 ) -> impl IntoResponse {
     debug!("User data: {:?}", user_data);
-    match User::create(&app_state.pool, &user_data.username, &user_data.email, &user_data.password).await {
+    match User::create(&app_state.pool, &user_data.username, &user_data.email, &user_data.password, &user_data.role).await {
         Ok(user) => {
             debug!("User created: {:?}", user);
             ApiResponse::new(StatusCode::CREATED, "User created", Some(serde_json::to_value(user).unwrap()))
@@ -98,5 +120,24 @@ pub async fn logout() -> impl IntoResponse {
         .header(header::SET_COOKIE, cookie.to_string())
         .body(body::Body::empty())
         .unwrap()
+}
+
+pub async fn read(
+    State(app_state): State<Arc<AppState>>,
+) -> impl IntoResponse {
+    match User::read_all(&app_state.pool).await {
+        Ok(values) => {
+            debug!("Users: {:?}", values);
+            ApiResponse::new(
+                StatusCode::OK,
+                "Users",
+                Some(serde_json::to_value(values).unwrap_or_default()),
+            )
+        }
+        Err(e) => {
+            error!("Error reading values: {:?}", e);
+            ApiResponse::new(StatusCode::BAD_REQUEST, "Error reading values", None)
+        }
+    }
 }
 

@@ -1,6 +1,4 @@
-import react from "react";
-import { ThemeProvider, createTheme } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
+import React, { lazy, Suspense } from "react";
 import {
     BrowserRouter,
     Routes,
@@ -10,19 +8,25 @@ import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 import Backend from "i18next-http-backend";
-import PublicLayout from "./layouts/public_layout";
-import AuthLayout from "./layouts/auth_layout";
-import AdminLayout from "./layouts/admin_layout";
-import LoginPage from "./pages/public/login_page";
-import HomePage from "./pages/public/home_page";
-import LogoutPage from "./pages/admin/logout_page";
-import PostPage from "./pages/admin/post_page";
-import PostsPage from "./pages/admin/posts_page";
-import TopicsPage from "./pages/admin/topics_page";
+import { ConfigProvider, theme } from "antd";
+import '@ant-design/v5-patch-for-react-19';
 
-import { AuthContextProvider } from "./components/auth_context";
-import "./App.css";
-import ModeContext, { ModeContextProvider } from "./components/mode_context";
+import { AuthContextProvider } from "@/components/auth_context";
+import ModeContext, { ModeContextProvider } from "@/components/mode_context";
+
+const PublicLayout = lazy(() => import('@/layouts/public_layout'));
+const AdminLayout = lazy(() => import('@/layouts/admin_layout'));
+const HomePage = lazy(() => import('@/pages/public/home_page'));
+const LoginPage = lazy(() => import('@/pages/public/login_page'));
+const LogoutPage = lazy(() => import('@/pages/admin/logout_page'));
+const DashboardPage = lazy(() => import('@/pages/admin/dashboard_page'));
+const RulesPage = lazy(() => import('@/pages/admin/rules_page'));
+const RequestsPage = lazy(() => import('@/pages/admin/requests_page'));
+const ChartsPage = lazy(() => import('@/pages/admin/charts_page'));
+const UsersPage = lazy(() => import('@/pages/admin/users_page'));
+const TopicsPage = lazy(() => import('@/pages/admin/topics_page'));
+
+import '@/App.css'
 
 i18n
     .use(Backend)
@@ -37,42 +41,49 @@ i18n
             escapeValue: false,
         }
     });
-const theme = createTheme({
-  colorSchemes: {
-    dark: true,
-  },
-});
-
-export default class App extends react.Component {
-    static contextType = ModeContext;
-    declare context: React.ContextType<typeof ModeContext>;
-    state = {
-        darkMode: true,
-    }
-
+export default class App extends React.Component {
     render = () => {
         return (
             <AuthContextProvider>
                 <ModeContextProvider>
-                    <ThemeProvider theme={theme}>
-                        <CssBaseline />
-                        <BrowserRouter>
-                            <Routes>
-                                <Route path="/" element={<PublicLayout />} >
-                                    <Route index element={<HomePage />} />
-                                </Route>
-                                <Route path="/admin" element={<AdminLayout />} >
-                                    <Route path="logout" element={<LogoutPage />} />
-                                    <Route path="posts" element={<PostsPage />} />
-                                    <Route path="topics" element={<TopicsPage />} />
-                                    <Route path="post" element={<PostPage />} />
-                                </Route>
-                                <Route path="/" element={<AuthLayout />} >
-                                    <Route path="login" element={<LoginPage />} />
-                                </Route>
-                            </Routes>
-                        </BrowserRouter>
-                    </ThemeProvider>
+                    <ModeContext.Consumer>
+                        {({ isDarkMode }) => {
+                            console.log(`Rendering App with isDarkMode ${isDarkMode}`);
+                            const algorithm = isDarkMode ? theme.darkAlgorithm : theme.defaultAlgorithm;
+                            const customTheme = {
+                                algorithm: algorithm,
+                                token: {
+                                    colorPrimary: "#fa541c",
+                                    colorInfo: "#fa541c",
+                                    fontSize: 16
+                                }
+                            };
+                            return (
+                                <ConfigProvider theme={customTheme}>
+                                    <BrowserRouter>
+                                        <Suspense fallback={<div>Loading...</div>}>
+                                            <Routes>
+                                                <Route path="/" element={<PublicLayout />} >
+                                                    <Route index element={<HomePage />} />
+                                                    <Route path="login" element={<LoginPage />} />
+                                                </Route>
+                                                <Route path="/admin" element={<AdminLayout />} >
+                                                    <Route index element={<DashboardPage />} />
+                                                    <Route path="logout" element={<LogoutPage />} />
+                                                    <Route path="dashboard" element={<DashboardPage />} />
+                                                    <Route path="rules" element={<RulesPage />} />
+                                                    <Route path="requests" element={<RequestsPage />} />
+                                                    <Route path="charts" element={<ChartsPage />} />
+                                                    <Route path="users" element={<UsersPage />} />
+                                                    <Route path="topics" element={<TopicsPage />} />
+                                                </Route>
+                                            </Routes>
+                                        </Suspense>
+                                    </BrowserRouter>
+                                </ConfigProvider>
+                            );
+                        }}
+                    </ModeContext.Consumer>
                 </ModeContextProvider>
             </AuthContextProvider>
         );

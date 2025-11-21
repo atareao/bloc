@@ -3,39 +3,46 @@ import { jwtDecode } from 'jwt-decode';
 
 declare module 'jwt-decode' {
     export interface JwtPayload {
-        role: string
+        role: string;
+        user_id: number;
     }
 }
 
 export interface AuthContextInterface {
-    token: string | null
-    role: string | null
-    isLoggedIn: boolean
-    login: Function
-    logout: Function
+    token: string | null;
+    isLoggedIn: boolean;
+    isAdmin: boolean;
+    role: string;
+    user_id: number;
+    login: Function;
+    logout: Function;
 }
 
 const AuthContext = React.createContext<AuthContextInterface>({
-    token: null,
-    role: null,
+    token: "",
     isLoggedIn: false,
+    isAdmin: false,
+    role: "",
+    user_id: -1,
     login: (token: string) => { console.log(`token: ${token}`) },
     logout: () => { }
 
 });
 
 
-interface AuthContextProviderProps {
+interface Props {
     children: React.ReactNode
 }
 
-interface AuthContextProviderState {
-    role: string | null
+interface State {
+    role: string
+    user_id: number
     token: string | null
     isLoggedIn: boolean
+    isAdmin: boolean
 }
 
-export class AuthContextProvider extends React.Component<AuthContextProviderProps, AuthContextProviderState> {
+export class AuthContextProvider extends React.Component<Props, State> {
 
     private logoutTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -43,22 +50,27 @@ export class AuthContextProvider extends React.Component<AuthContextProviderProp
         console.log("Constructing AuthContextProvider");
         super(props);
         this.logoutTimer = null;
-        let decoded = null;
         const tokenData = this.retrieveStoredToken();
         if (tokenData && tokenData.token) {
-            decoded = jwtDecode(tokenData.token);
-        }
-        if (tokenData && decoded) {
+            if(jwtDecode(tokenData.token)){
+            const decoded = jwtDecode(tokenData.token);
+            const role = decoded.role;
+            const user_id = decoded.user_id;
             this.state = {
+                role: role,
+                user_id: user_id,
                 token: tokenData.token,
-                role: decoded.role,
                 isLoggedIn: true,
+                isAdmin: role === "admin"
             }
-        } else {
+            }
+        }else{
             this.state = {
-                role: null,
+                role: "",
+                user_id: -1,
                 token: null,
-                isLoggedIn: true,
+                isLoggedIn: false,
+                isAdmin: false
             }
         }
     }
@@ -78,7 +90,7 @@ export class AuthContextProvider extends React.Component<AuthContextProviderProp
         console.log("Retrieving stored token");
         const storedToken = localStorage.getItem("token");
         let expirationTime = 0;
-        if (storedToken) {
+        if(storedToken) {
             const decoded = jwtDecode(storedToken);
             expirationTime = decoded.exp ? decoded.exp : 0;
         }
@@ -97,12 +109,12 @@ export class AuthContextProvider extends React.Component<AuthContextProviderProp
     logoutHandler = () => {
         console.log("Logging out");
         this.setState({
-            token: null,
-            role: null,
             isLoggedIn: false,
+            isAdmin: false,
+            token: null
         });
         localStorage.removeItem("token");
-        if (this.logoutTimer) {
+        if(this.logoutTimer) {
             clearTimeout(this.logoutTimer);
         }
         window.history.pushState({}, "", "/login");
@@ -119,16 +131,17 @@ export class AuthContextProvider extends React.Component<AuthContextProviderProp
         localStorage.setItem("token", token);
         const expirationTime = decoded.exp ? decoded.exp : 0;
         const remainingTime = this.calculateRemainingTime(expirationTime);
-        if (remainingTime <= 0) {
+        if(remainingTime <= 0) {
             console.log("Token has already expired");
             this.logoutHandler();
             return;
         }
         this.logoutTimer = setTimeout(this.logoutHandler, remainingTime); // that will log the user out when this timer expires
         this.setState({
-            token: token,
-            role: decoded.role,
             isLoggedIn: !!token,
+            isAdmin: decoded.role === "admin",
+            role: decoded.role,
+            token: token
         });
     }
 
@@ -138,7 +151,9 @@ export class AuthContextProvider extends React.Component<AuthContextProviderProp
             <AuthContext.Provider value={{
                 token: this.state.token,
                 role: this.state.role,
+                user_id: this.state.user_id,
                 isLoggedIn: this.state.isLoggedIn,
+                isAdmin: this.state.isAdmin,
                 login: this.loginHandler,
                 logout: this.logoutHandler
             }}>

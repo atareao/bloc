@@ -1,66 +1,97 @@
 use std::sync::Arc;
 
 use axum::{
+    Json, Router,
     extract::{Query, State},
     http::StatusCode,
     response::IntoResponse,
-    routing, Json, Router,
+    routing,
 };
 use tracing::{debug, error};
 
-use crate::models::{
-    ApiResponse,
-    AppState,
-    Post,
-    NewPost,
-    ReadPostParams,
-    Pagination,
-    PagedResponse,
-};
 use crate::constants::{DEFAULT_LIMIT, DEFAULT_PAGE};
+use crate::models::{
+    ApiResponse, AppState, NewPost, PagedResponse, Pagination, Post, ReadPostParams,
+};
 
 pub fn post_router() -> Router<Arc<AppState>> {
     Router::new()
         .route("/", routing::post(create))
         .route("/", routing::patch(update))
         .route("/", routing::get(read))
+        .route("/{class}", routing::get(read_all_for_class))
         .route("/", routing::delete(delete))
 }
 
 pub async fn create(
     State(app_state): State<Arc<AppState>>,
-    Json(post): Json<NewPost>,
+    Json(mut post): Json<NewPost>,
 ) -> impl IntoResponse {
     debug!("Post: {:?}", post);
-    match Post::create(&app_state.pool, &post).await {
+    match Post::create(&app_state.pool, &mut post).await {
         Ok(post) => {
             debug!("Post created: {:?}", post);
             ApiResponse::new(
-                StatusCode::CREATED, 
-                "Created", 
-                Some(serde_json::to_value(post).unwrap()))
-        },
+                StatusCode::CREATED,
+                "Created",
+                Some(serde_json::to_value(post).unwrap()),
+            )
+        }
         Err(e) => {
-            error!("Error creating post: {:?}", e);
-            ApiResponse::new(StatusCode::BAD_REQUEST, "Error creating poste", None)
+            let msg = format!("Error updating post: {:?}", e);
+            error!("{}", &msg);
+            ApiResponse::new(StatusCode::BAD_REQUEST, &msg, None)
         }
     }
 }
 
 pub async fn update(
     State(app_state): State<Arc<AppState>>,
-    Json(post): Json<Post>,
+    Json(mut post): Json<Post>,
 ) -> impl IntoResponse {
     debug!("Update post: {:?}", post);
-    match Post::update(&app_state.pool, &post).await {
+    match Post::update(&app_state.pool, &mut post).await {
         Ok(post) => {
             debug!("Post updated: {:?}", post);
-            ApiResponse::new(StatusCode::OK, "Post updated", Some(serde_json::to_value(post).unwrap()))
-        },
-        Err(e) => {
-            error!("Error updating post: {:?}", e);
-            ApiResponse::new(StatusCode::BAD_REQUEST, "Error updating post", None)
+            ApiResponse::new(
+                StatusCode::OK,
+                "Post updated",
+                Some(serde_json::to_value(post).unwrap()),
+            )
         }
+        Err(e) => {
+            let msg = format!("Error updating post: {:?}", e);
+            error!("{}", &msg);
+            ApiResponse::new(StatusCode::BAD_REQUEST, &msg, None)
+        }
+    }
+}
+
+pub async fn read_all_for_class(
+    State(app_state): State<Arc<AppState>>,
+    Query(params): Query<ReadPostParams>,
+) -> impl IntoResponse {
+    debug!("Read posts for class: {:?}", params);
+    if let Some(class) = &params.class {
+        match Post::read_all_for_class(&app_state.pool, class).await {
+            Ok(posts) => {
+                debug!("Posts: {:?}", posts);
+                ApiResponse::new(
+                    StatusCode::OK,
+                    "Posts",
+                    Some(serde_json::to_value(posts).unwrap()),
+                )
+                .into_response()
+            }
+            Err(e) => {
+                let msg = format!("Error reading posts for class {}: {:?}", class, e);
+                error!("{}", &msg);
+                ApiResponse::new(StatusCode::BAD_REQUEST, &msg, None).into_response()
+            }
+        }
+    } else {
+        ApiResponse::new(StatusCode::BAD_REQUEST, "Class parameter is required", None)
+            .into_response()
     }
 }
 
@@ -75,22 +106,21 @@ pub async fn read(
             Ok(posts) => {
                 debug!("Posts: {:?}", posts);
                 ApiResponse::new(
-                    StatusCode::OK, 
-                    "Posts", 
-                    Some(serde_json::to_value(posts).unwrap())
-                ).into_response()
-            },
+                    StatusCode::OK,
+                    "Posts",
+                    Some(serde_json::to_value(posts).unwrap()),
+                )
+                .into_response()
+            }
             Err(e) => {
-                error!("Error reading posts: {:?}", e);
-                ApiResponse::new(
-                    StatusCode::BAD_REQUEST, 
-                    "Error reading posts", 
-                    None
-                ).into_response()
+                let msg = format!("Error reading posts: {:?}", e);
+                error!("{}", &msg);
+                ApiResponse::new(StatusCode::BAD_REQUEST, &msg, None).into_response()
             }
         }
-    }else if let Ok(posts) = Post::read_paged(&app_state.pool, &params).await &&
-            let Ok(count) = Post::count_paged(&app_state.pool, &params).await {
+    } else if let Ok(posts) = Post::read_paged(&app_state.pool, &params).await
+        && let Ok(count) = Post::count_paged(&app_state.pool, &params).await
+    {
         debug!("Posts: {:?}", posts);
         let limit = params.limit.unwrap_or(DEFAULT_LIMIT);
         let offset = params.page.unwrap_or(DEFAULT_PAGE) - 1;
@@ -102,31 +132,37 @@ pub async fn read(
             records: count,
             prev: if offset > 0 {
                 Some(format!("/records?page={}&limit={}", offset, limit))
-            }else{
+            } else {
                 None
             },
             next: if (offset + 1) < total_pages {
                 Some(format!("/records?page={}&limit={}", offset + 2, limit))
-            }else{
+            } else {
                 None
             },
         };
-        PagedResponse::new(StatusCode::OK, "results", 
+        PagedResponse::new(
+            StatusCode::OK,
+            "results",
             Some(serde_json::to_value(posts).unwrap()),
-            pagination)
-            .into_response()
-    }else{
+            pagination,
+        )
+        .into_response()
+    } else {
         match Post::read_all(&app_state.pool).await {
             Ok(posts) => {
                 debug!("Posts: {:?}", posts);
                 ApiResponse::new(
-                    StatusCode::OK, 
-                    "Posts", 
-                    Some(serde_json::to_value(posts).unwrap())).into_response()
-            },
+                    StatusCode::OK,
+                    "Posts",
+                    Some(serde_json::to_value(posts).unwrap()),
+                )
+                .into_response()
+            }
             Err(e) => {
                 error!("Error reading posts: {:?}", e);
-                ApiResponse::new(StatusCode::BAD_REQUEST, "Error reading posts", None).into_response()
+                ApiResponse::new(StatusCode::BAD_REQUEST, "Error reading posts", None)
+                    .into_response()
             }
         }
     }
@@ -134,20 +170,25 @@ pub async fn read(
 
 pub async fn delete(
     State(app_state): State<Arc<AppState>>,
-    Json(post): Json<Post>,
+    Query(params): Query<ReadPostParams>,
 ) -> impl IntoResponse {
-    debug!("Post: {:?}", &post);
-    match Post::delete(&app_state.pool, &post).await {
-        Ok(post) => {
-            debug!("Post deleted: {:?}", post);
-            ApiResponse::new(StatusCode::OK, "Post deleted", Some(serde_json::to_value(post).unwrap()))
-        },
-        Err(e) => {
-            error!("Error deleting post: {:?}", e);
-            ApiResponse::new(StatusCode::BAD_REQUEST, "Error deleting post", None)
+    if let Some(id) = params.id {
+        let post_id: i32 = id.parse().unwrap_or(0);
+        match Post::delete(&app_state.pool, post_id).await {
+            Ok(post) => {
+                ApiResponse::new(
+                    StatusCode::OK,
+                    "Post",
+                    Some(serde_json::to_value(post).unwrap()),
+                )
+            }
+            Err(e) => {
+                let msg = format!("Post with id {} not found", post_id);
+                error!("{}", &msg);
+                ApiResponse::new(StatusCode::NOT_FOUND, &msg, None)
+            }
         }
+    } else {
+        ApiResponse::new(StatusCode::BAD_REQUEST, "post_id is mandatory", None)
     }
 }
-
-
-

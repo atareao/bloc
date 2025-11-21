@@ -1,138 +1,108 @@
 import React from "react";
-import Paper from '@mui/material/Paper';
-import Typography from '@mui/material/Typography';
-import IconButton from '@mui/material/IconButton';
-import Tooltip from '@mui/material/Tooltip';
-import Box from '@mui/material/Box';
-import Stack from '@mui/material/Stack';
-import { useNavigate } from "react-router";
+import { useNavigate } from 'react-router';
 import { useTranslation } from "react-i18next";
-import { MdAdd } from "react-icons/md";
-import CustomTable from "../../components/custom_table";
-import { loadData } from '../../common/utils';
-import { Topic } from '../../common/types';
-import { STATUS } from "../../common/constants";
+import { Button, Space } from 'antd';
+import { EditFilled, DeleteFilled, PlusOutlined } from '@ant-design/icons';
+import type Post from "@/models/post"; // Alias para Rule
 
-const ENDPOINT = 'posts';
+// Importamos CustomTable y los tipos necesarios
+import AuthContext from '@/components/auth_context';
+import CustomTable from '@/components/custom_table';
+import type { FieldDefinition } from '@/common/types';
+import type { DialogMessages } from '@/components/dialogs/custom_dialog';
 
+// 1. Constantes de configuración (fuera de la clase)
+const TITLE = "Topics";
+const ENDPOINT = "posts";
+
+// Definición de los campos (tipados para Item, que es Rule)
+
+// Mensajes específicos para el CustomDialog de Rules
+const RULE_DIALOG_MESSAGES: DialogMessages = {
+    createTitle: 'Create Topic',
+    readTitle: 'View Topic',
+    updateTitle: 'Update Topic',
+    deleteTitle: 'Delete Topic',
+    confirmDeleteMessage: (id: number | string) => `Are you sure you want to delete topic "${id}"?`,
+};
+
+// 2. Definición de Props y Clase
 interface Props {
-    t: any
-    navigate:any
-}
-interface State {
-    columns: any[]
-    isLoading: boolean
+    navigate: any; // Propiedad de useNavigate (aunque no se usa aquí)
+    user_id: number;
+    t: (key: string) => string; // Propiedad de useTranslation
 }
 
-export class InnerTopicsPage extends React.Component<Props, State> {
+// La clase ya no necesita State, ya que CustomTable maneja el estado de la tabla.
+export class InnerPage extends React.Component<Props, {}> {
 
-    constructor(props: Props) {
-        super(props);
-        console.log("Constructing page");
-        this.state = {
-            columns: [],
-            isLoading: true,
-        }
-    }
-
-    loadTopics = async () => {
-        console.debug("Loading auxiliary data");
-        let responseJson = await loadData('topics');
-        if (responseJson.status === 200) {
-            const values = responseJson.data;
-            const topics = values
-                .map((c: Topic) => {
-                    return { value: c.id, label: c.name };
-                });
-            return topics;
-        }
-        return [];
-    }
-
-    componentDidMount = async () => {
-        console.log("Mounting page");
-        const topics = await this.loadTopics();
-        const status = STATUS.map((s) => {
-            return { value: s, label: s };
-        });
-        console.log("Topics loaded", topics);
-        this.setState({
-            isLoading: false,
-            columns: [
-                { field: 'id', headerName: 'Id', type: 'number', width: 60, editable: false },
-                {
-                    field: 'topic_id',
-                    headerName: 'Topic',
-                    width: 250,
-                    type: 'singleSelect',
-                    valueOptions: topics,
-                    editable: true,
-                    valueGetter: (value: any) => value ? value : topics[0].value
-                },
-                {
-                    field: 'status',
-                    headerName: 'Status',
-                    width: 120,
-                    type: 'singleSelect',
-                    valueOptions: status,
-                    editable: true,
-                    valueGetter: (value: any) => value ? value : topics[0].value
-                },
-                { field: 'title', headerName: 'Title', type: 'string', width: 350 },
-            ],
-        });
-    }
-
-    render = () => {
-        console.log("Rendering page");
-        if (this.state.isLoading) {
-            return (
-                <Paper sx={{
-                    marginLeft: "300px",
-                    width: '80vw',
-                    height: '60vh',
-                    p: 2
-                }}>
-                    <Typography variant="h4">Posts</Typography>
-                </Paper>
-            );
-        }
+    // 3. Método para renderizar el botón "Añadir"
+    private renderHeaderAction = (onCreate: () => void) => {
         return (
-            <>
-                <Box style={{ height: 100 }} />
-                <Paper sx={{
-                    marginLeft: "300px",
-                    width: '80vw',
-                    height: '60vh',
-                    p: 2
-                }}>
-                    <Stack direction="row">
-                        <Typography variant="h4" sx={{ marginRight: "10px" }}>Posts</Typography>
-                        <Tooltip title="Create new post">
-                            <IconButton onClick={() => this.props.navigate('/admin/post')}>
-                                <MdAdd size="1.3em" />
-                            </IconButton>
-                        </Tooltip>
-                    </Stack>
-                    <CustomTable
-                        endPoint={ENDPOINT}
-                        columns={this.state.columns}
-                        sortBy="id"
-                        newRow={{
-                            id: -1,
-                            title: '',
-                            status: 'draft',
-                        }}
-                    />
-                </Paper>
-            </>
+            <Button
+                type="primary"
+                onClick={onCreate} // Llama al manejador interno de CustomTable para abrir el diálogo CREATE
+                icon={<PlusOutlined />}
+            >
+                {this.props.t("Add Topic")}
+            </Button>
+        );
+    };
+
+    // 4. Método para renderizar la columna de acciones
+    private renderActionColumn = (item: Post, onEdit: (item: Post) => void, onDelete: (post: Post) => void) => {
+        return (
+            <Space size="middle">
+                <Button onClick={() => onEdit(item)} title={this.props.t('Edit')}>
+                    <EditFilled />
+                </Button>
+                <Button onClick={() => onDelete(item)} title={this.props.t('Delete')} danger>
+                    <DeleteFilled />
+                </Button>
+            </Space>
+        );
+    };
+
+    // 5. El método render ahora solo devuelve el CustomTable
+    render = () => {
+        // La clase ya no tiene this.state, this.columns, fetchData, etc.
+        // Toda la complejidad se delega a CustomTable.
+        const fields: FieldDefinition<Post>[] = [
+            { key: 'id', label: 'Id', type: 'number', value: 0, editable: false, fixed: 'left', width: 80 },
+            { key: 'user_id', label: 'User', type: 'string', value: this.props.user_id, editable: false, width: 100 },
+            { key: 'class', label: 'Class', type: 'string', value: "page", width: 100, editable: false },
+            { key: 'comment_on', label: 'Comments', type: 'boolean', value: false, width: 80 },
+            { key: 'private', label: 'Private', type: 'boolean', value: true, width: 80 },
+            { key: 'title', visible: true, label: 'Title', type: 'string', value: "", width: 150 },
+        ];
+        return (
+            <CustomTable<Post>
+                title={TITLE}
+                endpoint={ENDPOINT}
+                fields={fields}
+                dialogMessages={RULE_DIALOG_MESSAGES}
+                t={this.props.t}
+                hasActions={true}
+                renderHeaderAction={this.renderHeaderAction}
+                renderActionColumn={this.renderActionColumn}
+            />
         );
     }
 }
 
-export default function TopicsPage() {
-    const { t } = useTranslation();
+// 6. Componente funcional (wrapper) para conectar Hooks
+export default function Page() {
     const navigate = useNavigate();
-    return <InnerTopicsPage navigate={navigate} t={t} />;
+    // useTranslation debe estar en un componente funcional o en un componente de clase con un wrapper
+    const { t } = useTranslation();
+    return (
+        <AuthContext.Consumer>
+            {({ user_id }) => {
+                console.log(`Rendering Topics Page for user_id: ${user_id}`);
+                return (
+                    <InnerPage navigate={navigate} user_id={user_id} t={t} />
+                );
+            }}
+        </AuthContext.Consumer>
+    );
 }
-

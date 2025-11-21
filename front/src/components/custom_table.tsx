@@ -1,332 +1,376 @@
-import * as React from "react";
-import { MdDelete, MdCancel, MdEdit } from "react-icons/md";
-import {
-    MuiEvent,
-    GridRowsProp,
-    GridRowModesModel,
-    DataGrid,
-    GridColDef,
-    GridRowId,
-    GridRowModes,
-    GridRowModel,
-    GridPaginationModel,
-    GridRowEditStopReasons,
-    GridCellEditStopParams,
-    GridActionsCellItem,
-    GridCellEditStopReasons,
-} from '@mui/x-data-grid';
-import Snackbar from '@mui/material/Snackbar';
-import Alert, { AlertProps } from '@mui/material/Alert';
-import { loadData } from '../common/utils';
-import { BASE_URL } from '../constants';
+import React from "react";
+import { Table, Input, Flex, Typography } from 'antd';
+import type { GetProp, TableProps, TableColumnsType } from 'antd';
+import type { SorterResult } from 'antd/es/table/interface';
+import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
+const { Text } = Typography;
+type TablePaginationConfig = Exclude<GetProp<TableProps, 'pagination'>, boolean>;
 
-interface Props {
-    newRow: any
-    endPoint: string
-    columns: any[]
-    sortBy?: string
+import { loadData, mapsEqual, debounce } from '@/common/utils';
+import type { DialogMode, FieldDefinition } from '@/common/types';
+import { DialogModes } from '@/common/types';
+import CustomDialog from '@/components/dialogs/custom_dialog';
+import type { DialogMessages, DialogProps } from '@/components/dialogs/custom_dialog';
+
+interface ActionProps<T> {
+    renderActionColumn: (item: T, onEdit: (item: T) => void, onDelete: (item: T) => void) => React.ReactNode;
+    renderHeaderAction: (onCreate: () => void) => React.ReactNode;
 }
 
-interface State {
-    rows: GridRowModel[]
-    rowModesModel: GridRowModesModel
-    pagination: GridPaginationModel
-    isLoading: boolean
-    snackbar: Pick<AlertProps, 'children' | 'severity'> | null
+// Definición de los parámetros que recibirá la función dialogRenderer
+interface DialogRendererParams<T> {
+    dialogMode: DialogMode;
+    selectedItem: T | undefined; // selectedItem puede ser T o Diptych
+    handleCloseDialog: (item?: T | undefined) => void; // handleCloseDialog ahora acepta T | Diptych
+    endpoint: string;
+    fields: FieldDefinition<T>[];
+    dialogMessages?: DialogMessages;
 }
 
-export default class CustomTable extends React.Component<Props, State> {
-    columns: GridColDef<GridRowModel>[];
-    columnGroupingModel: any[];
+// Añadir prop dialogRenderer
+type Props<T extends { id: number | string }> = {
+    title: string;
+    endpoint: string;
+    params?: Map<string, string>;
+    fields: FieldDefinition<T>[];
+    dialogMessages?: DialogMessages;
+    t: (key: string) => string;
+    hasActions?: boolean;
+    dialogRenderer?: (params: DialogRendererParams<T>) => React.ReactNode | null; // Función para renderizar el diálogo
+} & Partial<ActionProps<T>>;
 
-    constructor(props: Props) {
+interface State<T> {
+    items: T[];
+    loading: boolean;
+    pagination: TablePaginationConfig;
+    sortField?: SorterResult<any>['field'];
+    sortOrder?: SorterResult<any>['order'];
+    filters: Map<string, string>;
+    selectedItem?: T ; // selectedItem puede ser T o Diptych
+    dialogMode: DialogMode;
+}
+
+const getNestedValue = (obj: any, path: string): any => {
+    const pathParts = path.split('.');
+    let current = obj;
+
+    for (const part of pathParts) {
+        if (current && typeof current === 'object' && part in current) {
+            current = current[part];
+        } else {
+            return undefined;
+        }
+    }
+    return current;
+};
+
+
+export default class CustomTable<T extends { id: number | string }> extends React.Component<Props<T>, State<T>> {
+    columns: TableColumnsType<T>;
+    private debouncedSetFilter: (key: string, value: string) => void;
+
+    constructor(props: Props<T>) {
         super(props);
-        console.log(`Constructing CustomTable:`, props);
+
+        const initialFilters = new Map<string, string>();
+        props.fields.forEach(field => initialFilters.set(field.key.toString(), ""));
+
         this.state = {
-            rows: [],
-            rowModesModel: {},
-            pagination: { page: 0, pageSize: 10 },
-            isLoading: true,
-            snackbar: null,
+            items: [],
+            loading: false,
+            pagination: { current: 1, pageSize: 9, total: 0 },
+            filters: initialFilters,
+            dialogMode: DialogModes.NONE,
+            selectedItem: undefined,
         };
-        this.columns = [];
-        this.columnGroupingModel = [];
+
+        this.columns = this.getColumns();
+        const updateFilterState = (key: string, value: string) => {
+            const cleanValue = value.trim().replaceAll("*", "%");
+            this.setState((prevState) => {
+                // Si el valor no ha cambiado, no hacemos nada
+                if (prevState.filters.get(key) === cleanValue) {
+                    return prevState;
+                }
+                const newFilters = new Map(prevState.filters);
+                newFilters.set(key, cleanValue);
+                return {
+                    ...prevState,
+                    filters: newFilters,
+                    pagination: { ...prevState.pagination, current: 1 },
+                    items: [],
+                    loading: true,
+                };
+            });
+        };
+
+        this.debouncedSetFilter = debounce(updateFilterState, 500);
+    }
+
+    private handleEdit = (item: T) => {
+        this.setState({ selectedItem: item, dialogMode: DialogModes.UPDATE });
+    }
+
+    private handleDelete = (item: T) => {
+        this.setState({ selectedItem: item, dialogMode: DialogModes.DELETE });
+    }
+
+    private handleCreate = () => {
+        this.setState({ dialogMode: DialogModes.CREATE, selectedItem: undefined });
+    }
+
+    // handleCloseDialog ahora acepta T | Diptych | undefined
+    private handleCloseDialog = (item?: T | undefined) => {
+        if (item) {
+            this.setState(prevState => {
+                let newItems = [...prevState.items];
+                // Asumiendo que el item tiene una propiedad 'id' compatible
+                if (prevState.dialogMode === DialogModes.DELETE) {
+                    newItems = newItems.filter((r) => r.id !== (item as T).id);
+                } else if (prevState.dialogMode === DialogModes.UPDATE) {
+                    newItems = newItems.map((r) => r.id === (item as T).id ? { ...r, ...item as T } : r);
+                } else if (prevState.dialogMode === DialogModes.CREATE) {
+                    newItems = [...newItems, item as T];
+                }
+                return {
+                    ...prevState,
+                    items: newItems,
+                    dialogMode: DialogModes.NONE,
+                    selectedItem: undefined,
+                };
+            });
+        } else {
+            this.setState({
+                dialogMode: DialogModes.NONE,
+                selectedItem: undefined,
+            });
+        }
+    }
+
+    getColumns = (): TableColumnsType<T> => {
+        let columns: TableColumnsType<T> = this.props.fields.map((field) => {
+            const fieldKey = field.key.toString();
+            const filterValue = this.state.filters.get(fieldKey) || "";
+
+            const handleFilterChange = (e: React.KeyboardEvent<HTMLInputElement>) => {
+                this.debouncedSetFilter(field.key.toString(), e.currentTarget.value);
+            };
+            const defaultRender = (content: any) => {
+                if (field.type === 'boolean') {
+                    return content ? <CheckOutlined style={{ color: 'green' }} /> : <CloseOutlined style={{ color: 'red' }} />;
+                }
+                return <Text>{content}</Text>
+            };
+            const isNested = fieldKey.includes('.');
+            let finalRender = field.render || defaultRender;
+
+            if (isNested && !field.render) {
+                finalRender = (_content: any, record: T) => {
+                    const value = getNestedValue(record, fieldKey);
+                    if (field.type === 'boolean') {
+                        return value ? <CheckOutlined style={{ color: 'green' }} /> : <CloseOutlined style={{ color: 'red' }} />;
+                    }
+                    return <Text>{value !== undefined && value !== null ? value : ''}</Text>;
+                };
+            }
+            return {
+                title: (
+                    <Flex vertical justify="flex-end" align="left" gap="middle" >
+                        <Text strong>{this.props.t(field.label)}</Text>
+                        {(field.type === 'string' && field.filterKey) &&
+                            <Input
+                                placeholder={this.props.t('Filter by') + ` ${field.label}...`}
+                                defaultValue={filterValue.replaceAll("%", "*")}
+                                onKeyUp={handleFilterChange}
+                                onClick={e => e.stopPropagation()}
+                            />
+                        }
+                    </Flex>
+                ),
+                dataIndex: field.key.toString(),
+                key: field.key.toString(),
+                sorter: field.type !== 'boolean',
+                ellipsis: true,
+                width: field.width || 100,
+                render: (content: any, record: T) => field.render ? field.render(content, record ) : finalRender(content, record),
+                fixed: field.fixed || undefined,
+            };
+        });
+        if (this.props.hasActions && this.props.renderActionColumn) {
+            columns.push({
+                title: <Text>{this.props.t('Acciones')}</Text>,
+                key: "operation-actions",
+                align: 'center',
+                width: 10,
+                fixed: 'right',
+                render: (item: T) => this.props.renderActionColumn!(item, this.handleEdit, this.handleDelete)
+            });
+        }
+        return columns;
+    }
+
+    handleTableChange: TableProps<T>['onChange'] = async (
+        pagination: any,
+        _filters: any,
+        sorter: any,
+        _extra: any,
+    ) => {
+        const rawSortField = (sorter as SorterResult<T>).field as SorterResult<any>['field'];
+        const fieldDefinition = this.props.fields.find(f => f.key === rawSortField);
+        const newSortField = fieldDefinition?.sortKey || rawSortField;
+        const newSortOrder = (sorter as SorterResult<T>).order;
+
+        this.setState((prevState) => {
+            const isPageSizeChanged = pagination.pageSize !== prevState.pagination?.pageSize;
+            const isPageChanged = prevState.pagination?.current !== pagination.current;
+
+            return {
+                ...prevState,
+                pagination: { ...prevState.pagination, ...pagination },
+                sortOrder: newSortOrder,
+                sortField: newSortField,
+                items: (isPageSizeChanged || isPageChanged) ? [] : [...prevState.items],
+                loading: (isPageSizeChanged || isPageChanged || prevState.sortOrder !== newSortOrder || prevState.sortField !== newSortField) ? true : prevState.loading,
+            }
+        });
+    }
+
+    fetchData = async () => {
+        if (this.state.dialogMode !== DialogModes.NONE) {
+            return;
+        }
+        this.setState({ loading: true });
+        let sortBy = this.state.sortField?.toString().trim() || 'created_at';
+        const params: Map<string, string> = new Map([
+            ["page", this.state.pagination?.current?.toString() || "1"],
+            ["limit", this.state.pagination?.pageSize?.toString() || "10"],
+            ["sort_by", sortBy],
+        ]);
+        this.props.params?.forEach((value, key) => {
+            params.set(key, value);
+        });
+        const sortOrder = this.state.sortOrder;
+        if (sortOrder === 'ascend') {
+            params.set("asc", 'true');
+        } else if (sortOrder === 'descend') {
+            params.set("asc", 'false');
+        }
+        this.state.filters.forEach((value, fieldKey) => {
+            if (value && value.length > 0) {
+                const fieldDefinition = this.props.fields.find(f => f.key === fieldKey);
+                const apiFilterKey = fieldDefinition?.filterKey || fieldKey;
+                params.set(apiFilterKey, value);
+            }
+        });
+        const responseJson = await loadData<T[]>(this.props.endpoint, params);
+        console.log(responseJson.data);
+        if (responseJson.status === 200 && responseJson.data) {
+            this.setState(prevState => ({
+                ...prevState,
+                items: responseJson.data!,
+                loading: false,
+                pagination: {
+                    ...prevState.pagination,
+                    current: responseJson.pagination?.page || 1,
+                    pageSize: responseJson.pagination?.limit || 10,
+                    total: responseJson.pagination?.records || 0,
+                }
+            }));
+        } else {
+            this.setState(prevState => ({ ...prevState, loading: false }));
+        }
     }
 
     componentDidMount = async () => {
-        console.log("Mounting page");
-        await this.loadMainData();
-        this.setState({ isLoading: false });
-        this.columns = [
-            {
-                field: 'actions',
-                type: 'actions',
-                headerName: 'Actions',
-                width: 100,
-                cellClassName: 'actions',
-                getActions: ({ id }) => {
-                    const isInEditMode = this.state.rowModesModel[id]?.mode === GridRowModes.Edit;
-                    if (isInEditMode) {
-                        return [
-                            <GridActionsCellItem
-                                icon={<MdCancel />}
-                                label="Cancel"
-                                className="textPrimary"
-                                onClick={() => this.handleCancelClick(id)}
-                                color="inherit"
-                            />,
-                        ];
-                    }
-                    return [
-                        <GridActionsCellItem
-                            icon={<MdEdit />}
-                            label="Edit"
-                            className="textPrimary"
-                            onClick={() => this.handleEditClick(id)}
-                            color="inherit"
-                        />,
-                        <GridActionsCellItem
-                            icon={<MdDelete />}
-                            label="Delete"
-                            onClick={() => this.handleDeleteClick(id)}
-                            color="inherit"
-                        />,
-                    ];
-                },
-            },
-            ...this.props.columns
-        ];
+        await this.fetchData();
+    }
+
+    componentDidUpdate = async (prevProps: Props<T>, prevState: State<T>) => {
+        if (prevProps.fields !== this.props.fields) {
+            this.columns = this.getColumns();
+        }
+
+        const filtersHaveChanged = !mapsEqual(prevState.filters, this.state.filters);
+        const dialogHasClosed = prevState.dialogMode !== DialogModes.NONE && this.state.dialogMode === DialogModes.NONE;
+
+        if (dialogHasClosed) {
+            await this.fetchData();
+            return;
+        } else if (this.state.dialogMode !== DialogModes.NONE) {
+            return;
+        }
+
+        if (prevState.pagination?.current !== this.state.pagination?.current ||
+            this.state.pagination?.pageSize !== prevState.pagination?.pageSize ||
+            this.state.sortField !== prevState.sortField ||
+            this.state.sortOrder !== prevState.sortOrder ||
+            filtersHaveChanged
+        ) {
+            if (filtersHaveChanged) {
+                this.columns = this.getColumns();
+            }
+            await this.fetchData();
+        }
     }
 
     render = () => {
+        const titleText = this.props.t(this.props.title);
+        const { hasActions, renderHeaderAction } = this.props;
 
-        if (this.state.isLoading) {
-            return (
-                <div>Loading...</div>
-            );
+        let dialogUI: React.ReactNode | null = null;
+
+        if (hasActions && this.state.dialogMode !== DialogModes.NONE) {
+            // If a custom dialog renderer is provided, use it
+            if (this.props.dialogRenderer) {
+                dialogUI = this.props.dialogRenderer({
+                    dialogMode: this.state.dialogMode,
+                    selectedItem: this.state.selectedItem,
+                    handleCloseDialog: this.handleCloseDialog,
+                    endpoint: this.props.endpoint,
+                    fields: this.props.fields,
+                    dialogMessages: this.props.dialogMessages,
+                });
+            } else {
+                // Fallback to CustomDialog if no renderer is provided
+                dialogUI = (
+                    <CustomDialog<T>
+                        endpoint={this.props.endpoint}
+                        fields={this.props.fields}
+                        dialogMessages={this.props.dialogMessages}
+                        data={this.state.selectedItem as DialogProps<T>['data']}
+                        dialogMode={this.state.dialogMode}
+                        onClose={this.handleCloseDialog}
+                    />
+                );
+            }
         }
-        const sortBy = this.props.sortBy?this.props.sortBy:"name";
+        
+        const headerUI = hasActions && renderHeaderAction ? (
+            renderHeaderAction(this.handleCreate)
+        ) : (
+            <Text style={{ fontSize: '24px' }} strong>{titleText}</Text>
+        );
+
         return (
             <>
-                <DataGrid
-                    initialState={{
-                        sorting: {
-                            sortModel: [{ field: sortBy, sort: 'asc' }]
-                        },
-                    }}
-                    paginationModel={this.state.pagination}
-                    pageSizeOptions={[10, 20, 50]}
-                    disableRowSelectionOnClick
-                    onPaginationModelChange={(newPaginationModel) => this.setState({ pagination: newPaginationModel })}
-                    rows={this.state.rows}
-                    columns={this.columns}
-                    columnGroupingModel={this.columnGroupingModel}
-                    editMode="row"
-                    rowModesModel={this.state.rowModesModel}
-                    onRowModesModelChange={this.handleRowModesModelChange}
-                    onRowEditStart={(params: any, event: any) => {
-                        console.log("onRowEditStart");
-                        console.log(params);
-                        console.log(event);
-                    }}
-                    onRowEditStop={this.handleRowEditStop}
-                    processRowUpdate={(updatedRow) => this.updateOnServer(updatedRow)}
-                    onProcessRowUpdateError={this.handleProcessRowUpdateError}
-                    onCellEditStop={(params: GridCellEditStopParams, event: MuiEvent) => {
-                        console.log("onCellEditStop");
-                        if (params.reason === GridCellEditStopReasons.cellFocusOut) {
-                            console.log("preceding defaultMuiPrevented", event.defaultMuiPrevented);
-                            event.defaultMuiPrevented = true;
-                        }
-                    }}
-                    showToolbar
-                />
-                {!!this.state.snackbar && (
-                    <Snackbar
-                        open
-                        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-                        onClose={this.handleCloseSnackbar}
-                        autoHideDuration={2000}
-                    >
-                        <Alert {...this.state.snackbar} onClose={this.handleCloseSnackbar} />
-                    </Snackbar>
-                )}
+                {dialogUI}
+                <Flex vertical justify="center" align="center" gap="middle" >
+                    <Flex justify="center" align="center" gap="middle" >
+                        {headerUI}
+                    </Flex>
+                    <Table<T>
+                        style={{ width: '100%' }}
+                        columns={this.columns}
+                        rowKey={record => record.id.toString()}
+                        dataSource={this.state.items}
+                        sortDirections={['ascend', 'descend']}
+                        pagination={this.state.pagination}
+                        loading={this.state.loading}
+                        onChange={this.handleTableChange}
+                        scroll={{ x: 'max-content' }}
+                    />
+                </Flex>
             </>
         );
     }
-
-    loadMainData = async () => {
-        console.log("Loading data");
-        const responseJson = await loadData(this.props.endPoint);
-        if (responseJson.status === 200) {
-            console.log(`Data loaded: JSON: ${JSON.stringify(responseJson)}`);
-            this.setState({
-                rows: responseJson.data,
-                pagination: { ...this.state.pagination, page: 0 },
-            });
-        }
-    }
-
-    handleSaveClick = async (id: GridRowId) => {
-        console.log(`handleSaveClick: ${id}`);
-        console.log(this.state.rows);
-        console.log(this.state.rowModesModel[id].mode);
-        if(this.state.rowModesModel[id].mode === "edit"){
-            console.log("=== edit ===");
-            this.setState({ rowModesModel: { ...this.state.rowModesModel, [id]: { mode: GridRowModes.View, ignoreModifications: true } } });
-            const editedRow = this.state.rows.find((row) => row.id === id);
-            if (editedRow!.isNew) {
-                this.setState({
-                    rows: [...this.state.rows.filter((row) => row.id !== id)],
-                });
-            }
-            console.log("=== edit ===");
-            return;
-        }
-        const updatedRows = this.state.rows.filter((row) => row.id == id);
-        console.log("Updated rows:", updatedRows);
-        if(updatedRows.length  > 0) {
-            const updatedRow = updatedRows[0];
-            await this.updateOnServer(updatedRow);
-        }
-    }
-
-    handleCancelClick = (id: GridRowId)  => {
-        console.log("handleCancelClick");
-        console.log(this.state.rows);
-        this.setState({ rowModesModel: { ...this.state.rowModesModel, [id]: { mode: GridRowModes.View, ignoreModifications: true } } });
-        const editedRow = this.state.rows.find((row) => row.id === id);
-        if (editedRow!.isNew) {
-            this.setState({
-                rows: [...this.state.rows.filter((row) => row.id !== id)],
-            });
-        }
-    }
-
-    handleEditClick = (id: GridRowId)  => {
-        console.log("handleEditClick", id);
-        if(id !== -1){
-            this.setState({ rowModesModel: { ...this.state.rowModesModel, [id]: { mode: GridRowModes.Edit } } });
-        }else{
-        }
-    }
-
-    handleDeleteClick = async (id: GridRowId) => {
-        console.log("Deleting row:", id);
-        try {
-            const params = new URLSearchParams();
-            params.append('id', id.toString());
-            const response = await fetch(`${BASE_URL}/api/v1/${this.props.endPoint}?${params}`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            });
-            const responseJson = await response.json();
-            console.log("Response:", JSON.stringify(responseJson));
-            if (response.ok) {
-                this.setState({
-                    rows: [...this.state.rows.filter((row) => row.id !== id)],
-                });
-            } else {
-                console.log("Response:", JSON.stringify(responseJson));
-                this.handleSnackbar("error", JSON.stringify(responseJson.message));
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            this.handleSnackbar("error", JSON.stringify(error));
-        }
-    }
-
-    updateOnServer = async (updatedRow: GridRowModel) => {
-        console.log("Updating row: updatedRow", updatedRow);
-        if(updatedRow.name === ''){
-            this.handleSnackbar("error", "Name cannot be empty");
-            return;
-        }
-        const updatedRowId = updatedRow.id;
-        let method;
-        if(updatedRow.isNew === true){
-            delete updatedRow['id'];
-            method = 'POST';
-        }else{
-            method = 'PATCH';
-        }
-        const body = JSON.stringify(updatedRow);
-        console.log("Body:", body);
-        try {
-            const response = await fetch(`${BASE_URL}/api/v1/${this.props.endPoint}`, {
-                method: method,
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: body
-            });
-            console.log(`Submitting: ${body}`);
-            const responseJson = await response.json();
-            console.log("Response:", JSON.stringify(responseJson));
-            if (response.ok) {
-                console.log("Response:", JSON.stringify(responseJson.data));
-                this.setState({
-                    rows: [...this.state.rows.filter((row) => row.id !== updatedRowId), responseJson.data],
-                });
-                return responseJson.data;
-            } else {
-                this.setState({
-                    rows: this.state.rows.filter((row) => row.id !== -1),
-                });
-                console.log("Response:", JSON.stringify(responseJson));
-                this.handleSnackbar("error", JSON.stringify(responseJson.message));
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            this.handleSnackbar("error", JSON.stringify(error));
-        }
-    }
-
-    handleCloseSnackbar = () => {
-        console.log("handleCloseSnackbar");
-        this.setState({ snackbar: null });
-    }
-
-    handleSnackbar = (severity: AlertProps['severity'], message: AlertProps['children']) => {
-        console.log("handleSnackbar");
-        this.setState({ snackbar: { severity: severity, children: message } });
-    }
-
-    handleRowModesModelChange = (newRowModesModel: GridRowModesModel) => {
-        console.log("handleRowModesModelChange");
-        this.setState({ rowModesModel: newRowModesModel });
-    }
-
-    handleProcessRowUpdateError = () => {
-        console.log("handleProcessRowUpdateError");
-        this.handleSnackbar("error", "Error updating row");
-    }
-
-    handleRowEditStop = (params: any, event: any) => {
-        console.log("handleRowEditStop");
-        console.log(params);
-        console.log(event);
-        if (params.reason === GridRowEditStopReasons.rowFocusOut) {
-            if(params.row.id !== -1) {
-                this.setState({
-                    rows: [...this.state.rows.filter((row) => row.id !== params.row.id), params.row],
-                    rowModesModel: { ...this.state.rowModesModel, [params.row.id]: { mode: GridRowModes.View } } }
-                );
-            }else{
-                this.setState({
-                    rows: this.state.rows.filter((row) => row.id !== params.row.id),
-                    rowModesModel: this.state.rowModesModel
-                });
-            }
-            event.defaultMuiPrevented = true;
-        }
-    }
-
-    setRows = (newRows: GridRowsProp) => {
-        console.log("setRows");
-        this.setState({ rows: newRows as GridRowModel[] });
-    }
 }
-

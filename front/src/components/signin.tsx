@@ -1,26 +1,21 @@
 import React from 'react';
-import TextField from '@mui/material/TextField';
-import Button from '@mui/material/Button';
-import Box from '@mui/material/Box';
-import Grid from '@mui/material/Grid';
-import Avatar from '@mui/material/Avatar';
-import { withTranslation } from 'react-i18next';
-import logo from '../assets/logo.svg';
+import { useTranslation } from "react-i18next";
+import { Card, Input, Button } from 'antd';
 
-interface SignInProps {
-    t: Function,
-    onSubmit: Function
-    responseMessage: string
+interface Props {
+    t: Function;
+    onSubmit: Function;
+    responseMessage: string;
 }
 
-interface SignInState {
-    email: string
-    password: string
+interface State {
+    email: string;
+    password: string;
 }
 
-class SignIn extends React.Component<SignInProps, SignInState> {
+class InnerSignIn extends React.Component<Props, State> {
 
-    constructor(props: SignInProps) {
+    constructor(props: Props) {
         console.log("Constructing sign in form");
         super(props);
         this.reset();
@@ -57,69 +52,48 @@ class SignIn extends React.Component<SignInProps, SignInState> {
         console.log("Rendering sign in form");
         const { t } = this.props;
         return (
-            <main>
-                <form onSubmit={this.handleSubmit}>
-                    <Grid
-                        container
-                        spacing={0}
-                        direction="column"
-                        alignItems="center"
-                        justifyContent="center"
-                        sx={{
-                            minHeight: '100vh',
-                        }}
-                    >
-                        <Box sx={{
-                            m: 1,
-                        }}>
-                            <Avatar
-                                alt="Bloc"
-                                src={logo}
-                                sx={{ width: 256, height: 256, p: 2}} />
-                        </Box>
-                        <Box
-                            sx={{
-                                backgroundColor: "#A8B858aa",
-                                borderRadius: 2,
-                                p: 2
-                        }}>
-                            <Box sx={{ m: 1 }}>
-                                <TextField
-                                    required
-                                    type="email"
-                                    id="email"
-                                    label={t("Email address")}
-                                    variant="outlined"
-                                    value={this.state.email}
-                                    onChange={this.handleEmailChange}
-                                    sx={{ mx: "auto" }} />
-                            </Box>
-                            <Box sx={{ m: 1 }}>
-                                <TextField
-                                    required
-                                    type="password"
-                                    id="password"
-                                    label={t('Password')}
-                                    variant="outlined"
-                                    value={this.state.password}
-                                    onChange={this.handlePasswordChange} />
-                            </Box>
-                            <Box sx={{ m: 1, alignItems: "center" }}>
-                                <Button
-                                    variant="contained"
-                                    type="submit">
-                                    {t('Sign in')}
-                                </Button>
-                            </Box>
-                            <Box sx={{ m: 1 }}>
-                                {this.props.responseMessage && <p>{this.props.responseMessage}</p>}
-                            </Box>
-                        </Box>
-                    </Grid>
-                </form>
-            </main>
+            <Card title="Login" style={{ width: 300 }}>
+                <Input
+                    id="email"
+                    type="email"
+                    required
+                    placeholder={t('Email')}
+                    value={this.state.email}
+                    onChange={this.handleEmailChange}
+                />
+                <br />
+                <br />
+                <Input
+                    id="password"
+                    type="password"
+                    required
+                    placeholder={t('Password')}
+                    value={this.state.password}
+                    onChange={this.handlePasswordChange}
+                />
+                <br />
+                <br />
+                <Button
+                    onClick={this.handleSubmit}
+                >
+                    {t('Sign in')}
+                </Button>
+            </Card>
         );
     }
 }
-export default withTranslation()(SignIn);
+
+interface SignInProps {
+    onSubmit: Function;
+    responseMessage: string;
+}
+
+export default function SignIn(props: SignInProps) {
+    const { t } = useTranslation();
+    return <InnerSignIn
+        t={t}
+        onSubmit={props.onSubmit}
+        responseMessage={props.responseMessage}
+    />;
+}
 

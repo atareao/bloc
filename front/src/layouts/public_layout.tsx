@@ -1,45 +1,59 @@
 import react from 'react';
 import { Outlet } from 'react-router';
-import Box from '@mui/material/Box';
-import Container from '@mui/material/Container';
-import PublicNavBar from '../components/nav_bar_public';
-import background from '../assets/background.jpg';
+import { Button, Layout, theme } from 'antd';
+import { useNavigate } from 'react-router';
+import { LoginOutlined } from '@ant-design/icons';
+
+import ModeSwitcher from '@/components/mode_switcher';
+
+const { Header, Footer, Content } = Layout;
+
+interface Props {
+    token: any;
+    navigate: any;
+}
 
 
-export default class PublicLayout extends react.Component {
+class InnerPublicLayout extends react.Component<Props> {
 
     render = () => {
         return (
-            <Box
-                sx={{
-                    backgroundImage: `url(${background})`,
-                    backgroundRepeat: "no-repeat",
-                    backgroundSize: "cover",
-                    height: "100vh",
-                    width: "100vw",
-                }}>
-                <Box
-                    sx={{
-                        backgroundColor: "#065ea655",
-                        backgroundRepeat: "no-repeat",
-                        backgroundSize: "cover",
-                        height: "100vh",
-                        width: "100vw",
-                    }}>
-                    <header>
-                        <PublicNavBar />
-                    </header>
-                    <main>
-                        <Container>
-                            <Outlet />
-                        </Container>
-                    </main>
-                    <footer>
-                    </footer>
-                </Box>
-            </Box>
+            <Layout style={{
+                minHeight: '100vh',
+                backgroundColor: this.props.token.coloBgLayout,
+                color: this.props.token.colorText,
+            }}>
+                <Header
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'flex-end',
+                        height: 64,
+                        paddingInline: 48,
+                    }}
+                >
+                    <Button
+                        variant="solid"
+                        onClick={() => this.props.navigate('/login')}
+                    >
+                        <LoginOutlined />
+                    </Button>
+                    <ModeSwitcher />
+                </Header>
+                <Content style={{ padding: '24px', flex: 1 }}>
+                    <Outlet />
+                </Content>
+
+                <Footer style={{ textAlign: 'center' }}>
+                    ©{new Date().getFullYear()} atareao
+                </Footer>
+            </Layout>
         );
     }
 }
 
-
+export default function PublicLayout() {
+    const navigate = useNavigate();
+    const { token } = theme.useToken();
+    return <InnerPublicLayout navigate={navigate} token={token}/>;
+}

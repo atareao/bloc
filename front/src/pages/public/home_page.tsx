@@ -1,13 +1,15 @@
 import react from "react";
-import Stack from "@mui/material/Stack";
-import Box from '@mui/material/Box';
-import { Typography } from "@mui/material";
 import { useNavigate } from 'react-router';
-import logo from '../../assets/logo.svg';
+import { useTranslation } from "react-i18next";
+import { Flex, Typography } from 'antd';
+import Logo from "@/assets/logo.svg";
+
 
 interface Props {
     navigate: any
+    t: any
 }
+
 
 export class HomeInnerPage extends react.Component<Props> {
     constructor(props: Props) {
@@ -17,30 +19,18 @@ export class HomeInnerPage extends react.Component<Props> {
 
     render = () => {
         return (
-            <Stack
-                justifyContent="center"
-                alignItems="center"
-                sx={{ width: 1, height: "100vh" }}
-            >
-                <Box>
-                <Typography
-                    sx={{
-                        fontSize: 120,
-                        fontWeight: "bold",
-                    }}
-                >bloc</Typography>
-                </Box>
-                <Box 
-                onClick={() => this.props.navigate("/services")}
-                sx={{
-                    backgroundImage: `url(${logo})`,
-                    backgroundRepeat: "no-repeat",
-                    backgroundSize: "contain",
-                    height: "350px",
-                    width: "350px",
-                    cursor: "pointer",
-                }}/>
-            </Stack>
+            <Flex vertical justify="center" align="center" gap="middle" style={{ height: '100vh' }}>
+                <Typography.Title level={1} style={{ margin: 0 }}>
+                    Shuul
+                </Typography.Title>
+                <Typography.Title level={2} style={{ margin: 0 }}>
+                    The gatekeeper of your data
+                </Typography.Title>
+                <Flex gap="middle" align="center" vertical>
+                    <img src={Logo} alt="Logo" style={{ width: 200, marginBottom: 20 }} />
+                </Flex>
+            </Flex>
+
         );
     }
 };
@@ -50,6 +40,7 @@ export class HomeInnerPage extends react.Component<Props> {
 
 export default function HomePage() {
     const navigate = useNavigate();
-    return <HomeInnerPage navigate={navigate}/>;
+    const { t } = useTranslation();
+    return <HomeInnerPage navigate={navigate} t={t} />;
 }
 
