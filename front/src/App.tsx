@@ -24,7 +24,8 @@ const RulesPage = lazy(() => import('@/pages/admin/rules_page'));
 const RequestsPage = lazy(() => import('@/pages/admin/requests_page'));
 const ChartsPage = lazy(() => import('@/pages/admin/charts_page'));
 const UsersPage = lazy(() => import('@/pages/admin/users_page'));
-const TopicsPage = lazy(() => import('@/pages/admin/topics_page'));
+const PostsPage = lazy(() => import('@/pages/admin/posts_page'));
+const PostPage = lazy(() => import('@/pages/admin/post_page'));
 
 import '@/App.css'
 
@@ -75,7 +76,10 @@ export default class App extends React.Component {
                                                     <Route path="requests" element={<RequestsPage />} />
                                                     <Route path="charts" element={<ChartsPage />} />
                                                     <Route path="users" element={<UsersPage />} />
-                                                    <Route path="topics" element={<TopicsPage />} />
+                                                    <Route path="posts" >
+                                                        <Route index element={<PostsPage />} />
+                                                        <Route path=":slug" element={<PostPage />} />
+                                                    </Route>
                                                 </Route>
                                             </Routes>
                                         </Suspense>

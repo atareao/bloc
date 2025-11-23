@@ -24,7 +24,7 @@ export interface FieldDefinition<T>{
     key: NestedKeyOf<T> & string; // La clave debe ser una clave de T y también un string
     labelKey?: NestedKeyOf<T> & string; // La clave debe ser una clave de T y también un string
     label: string;
-    type: 'boolean' | 'number' | 'date' | 'string' | 'select';
+    type: 'boolean' | 'number' | 'date' | 'datetime' | 'string' | 'select';
     value?: T[keyof T & string]; // Valor inicial de ese tipo
     customSorter?: (a: T, b: T) => number;
     render?: (content: any, record: T ) => React.ReactNode; 

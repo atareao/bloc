@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from 'react-router';
 import { useTranslation } from "react-i18next";
-import { Modal, Typography, Flex, Input, InputNumber, Switch, Select, Alert } from "antd";
+import { Modal, Typography, Flex, Input, InputNumber, Switch, Select, Alert, DatePicker } from "antd";
 
 const { Text } = Typography;
 
@@ -300,6 +300,23 @@ class InnerDialog<T> extends React.Component<Props<T>, State<T>> {
                                                     defaultValue={this.getValue(field.key as keyof T & string) as string}
                                                     placeholder={field.label}
                                                     onChange={(e) => this.onChange(field.key as keyof T & string, e.target.value)}
+                                                    disabled={disabled || field.editable === false}
+                                                />
+                                            }
+                                            {field.type === 'date' && field.visible == true &&
+                                                <DatePicker
+                                                    style={{ width: '100%' }}
+                                                    defaultValue={this.getValue(field.key as keyof T & string) as number}
+                                                    onChange={(value) => this.onChange(field.key as keyof T & string, value)}
+                                                    disabled={disabled || field.editable === false}
+                                                />
+                                            }
+                                            {field.type === 'datetime' && field.visible == true &&
+                                                <DatePicker
+                                                    style={{ width: '100%' }}
+                                                    defaultValue={this.getValue(field.key as keyof T & string) as number}
+                                                    showTime
+                                                    onChange={(value) => this.onChange(field.key as keyof T & string, value)}
                                                     disabled={disabled || field.editable === false}
                                                 />
                                             }

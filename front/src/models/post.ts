@@ -1,14 +1,14 @@
 export default interface Post {
     id: number;
-    class: string;
-    parent_id?: number;
     title?: string;
     slug?: string;
     content?: string;
-    user_id?: number;
+    excerpt?: string;
+    meta?: string;
     comment_on?: boolean;
     private?: boolean;
     audio_url?: string;
+    published_at?: Date;
     created_at?: Date;
     updated_at?: Date;
 }

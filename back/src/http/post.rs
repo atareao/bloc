@@ -89,6 +89,23 @@ pub async fn read(
                 ApiResponse::new(StatusCode::BAD_REQUEST, &msg, None).into_response()
             }
         }
+    }else if let Some(slug) = params.slug {
+        match Post::read_by_slug(&app_state.pool, slug.as_str()).await {
+            Ok(post) => {
+                debug!("Post: {:?}", post);
+                ApiResponse::new(
+                    StatusCode::OK,
+                    "Posts",
+                    Some(serde_json::to_value(post).unwrap()),
+                )
+                .into_response()
+            }
+            Err(e) => {
+                let msg = format!("Error reading posts: {:?}", e);
+                error!("{}", &msg);
+                ApiResponse::new(StatusCode::BAD_REQUEST, &msg, None).into_response()
+            }
+        }
     } else if let Ok(posts) = Post::read_paged(&app_state.pool, &params).await
         && let Ok(count) = Post::count_paged(&app_state.pool, &params).await
     {

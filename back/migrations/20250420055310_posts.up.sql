@@ -4,9 +4,11 @@ CREATE TABLE IF NOT EXISTS posts (
     slug VARCHAR NOT NULL UNIQUE,
     content TEXT DEFAULT '',
     excerpt TEXT DEFAULT '',
+    meta VARCHAR DEFAULT '',
     comment_on boolean DEFAULT FALSE,
     private boolean DEFAULT TRUE,
     audio_url VARCHAR,
+    published_at TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );

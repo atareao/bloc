@@ -18,9 +18,11 @@ pub struct NewPost {
     pub slug: Option<String>,
     pub content: Option<String>,
     pub excerpt: Option<String>,
+    pub meta: Option<String>,
     pub comment_on: Option<bool>,
     pub private: Option<bool>,
     pub audio_url: Option<String>,
+    pub published_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, FromRow)]
@@ -30,9 +32,11 @@ pub struct Post {
     pub slug: String,
     pub content: Option<String>,
     pub excerpt: Option<String>,
+    pub meta: Option<String>,
     pub comment_on: Option<bool>,
     pub private: Option<bool>,
     pub audio_url: Option<String>,
+    pub published_at: Option<DateTime<Utc>>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -41,6 +45,7 @@ pub struct Post {
 pub struct ReadPostParams {
     pub id: Option<String>,
     pub title: Option<String>,
+    pub slug: Option<String>,
     pub page: Option<u32>,
     pub limit: Option<u32>,
     pub sort_by: Option<String>,
@@ -58,23 +63,27 @@ impl Post {
                 slug,
                 content,
                 excerpt, 
+                meta,
                 comment_on,
                 private,
                 audio_url,
+                published_at,
                 created_at,
                 updated_at
             )
             VALUES (
-                $1, $2, $3, $4, $5, $6, $7, $8, $9
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
             ) RETURNING *";
         query_as::<_, Post>(sql)
             .bind(&post.title)
             .bind(&post.slug)
             .bind(&post.content)
             .bind(&post.excerpt)
+            .bind(&post.meta)
             .bind(post.comment_on)
             .bind(post.private)
             .bind(&post.audio_url)
+            .bind(post.published_at)
             .bind(now)
             .bind(now)
             .fetch_one(pool)
@@ -88,12 +97,14 @@ impl Post {
                 slug = $2,
                 content = $3,
                 excerpt = $4,
-                comment_on = $5,
-                private = $6,
-                audio_url = $7,
-                updated_at = $8
+                meta = $5,
+                comment_on = $6,
+                private = $7,
+                audio_url = $8,
+                published_at = $9,
+                updated_at = $10
             WHERE
-                id = $9
+                id = $11
             RETURNING *";
         let now = Utc::now();
         query_as::<_, Post>(sql)
@@ -101,9 +112,11 @@ impl Post {
             .bind(&post.slug)
             .bind(&post.content)
             .bind(&post.excerpt)
+            .bind(&post.meta)
             .bind(post.comment_on)
             .bind(post.private)
             .bind(&post.audio_url)
+            .bind(post.published_at)
             .bind(now)
             .bind(post.id)
             .fetch_one(pool)
@@ -142,6 +155,14 @@ impl Post {
             .await
     }
 
+    pub async fn read_by_slug(pool: &PgPool, slug: &str) -> Result<Post, Error> {
+        let sql = "SELECT * FROM posts WHERE slug = $1";
+        query_as::<_, Post>(sql)
+            .bind(slug)
+            .fetch_one(pool)
+            .await
+    }
+
     pub async fn read_paged(pool: &PgPool, params: &ReadPostParams) -> Result<Vec<Post>, Error> {
         let filters = vec![("title", &params.title)];
         let active_filters: Vec<(&str, String)> = filters
@@ -156,7 +177,7 @@ impl Post {
         let limit_index = active_filters.len() + 1;
         let offset_index = limit_index + 1;
         if let Some(sort_by) = params.sort_by.as_ref()
-            && ["title"].contains(&sort_by.as_str())
+            && ["title", "id", "published_at", "created_at", "slug"].contains(&sort_by.as_str())
         {
             if params.asc.unwrap_or(true) {
                 sql.push_str(&format!(" ORDER BY {} ASC", sort_by));
