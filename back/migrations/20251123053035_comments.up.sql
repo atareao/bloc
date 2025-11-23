@@ -1,0 +1,10 @@
+CREATE TABLE IF NOT EXISTS posts (
+    id SERIAL PRIMARY KEY,
+    post_id INTEGER NOT NULL,
+    parent_id INTEGER,
+    nikename VARCHAR NOT NULL,
+    content TEXT DEFAULT '',
+    approved boolean,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+);
