@@ -1,7 +1,8 @@
 mod response;
 mod user;
 mod post;
-mod class;
+mod tag;
+mod comment;
 
 pub use response::{
     ApiResponse,
@@ -11,8 +12,9 @@ pub use response::{
     PagedResponse,
 };
 pub use user::{User, TokenClaims, UserSchema, UserRegister};
-pub use class::Class;
 pub use post::{NewPost, Post, ReadPostParams};
+pub use tag::{NewTag, Tag, ReadTagParams};
+pub use comment::{NewComment, Comment, ReadCommentParams};
 pub type Error = Box<dyn std::error::Error>;
 
 use sqlx::postgres::PgPool;

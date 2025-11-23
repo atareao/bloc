@@ -19,7 +19,6 @@ pub fn post_router() -> Router<Arc<AppState>> {
         .route("/", routing::post(create))
         .route("/", routing::patch(update))
         .route("/", routing::get(read))
-        .route("/{class}", routing::get(read_all_for_class))
         .route("/", routing::delete(delete))
 }
 
@@ -64,34 +63,6 @@ pub async fn update(
             error!("{}", &msg);
             ApiResponse::new(StatusCode::BAD_REQUEST, &msg, None)
         }
-    }
-}
-
-pub async fn read_all_for_class(
-    State(app_state): State<Arc<AppState>>,
-    Query(params): Query<ReadPostParams>,
-) -> impl IntoResponse {
-    debug!("Read posts for class: {:?}", params);
-    if let Some(class) = &params.class {
-        match Post::read_all_for_class(&app_state.pool, class).await {
-            Ok(posts) => {
-                debug!("Posts: {:?}", posts);
-                ApiResponse::new(
-                    StatusCode::OK,
-                    "Posts",
-                    Some(serde_json::to_value(posts).unwrap()),
-                )
-                .into_response()
-            }
-            Err(e) => {
-                let msg = format!("Error reading posts for class {}: {:?}", class, e);
-                error!("{}", &msg);
-                ApiResponse::new(StatusCode::BAD_REQUEST, &msg, None).into_response()
-            }
-        }
-    } else {
-        ApiResponse::new(StatusCode::BAD_REQUEST, "Class parameter is required", None)
-            .into_response()
     }
 }
 
@@ -149,22 +120,8 @@ pub async fn read(
         )
         .into_response()
     } else {
-        match Post::read_all(&app_state.pool).await {
-            Ok(posts) => {
-                debug!("Posts: {:?}", posts);
-                ApiResponse::new(
-                    StatusCode::OK,
-                    "Posts",
-                    Some(serde_json::to_value(posts).unwrap()),
-                )
-                .into_response()
-            }
-            Err(e) => {
-                error!("Error reading posts: {:?}", e);
-                ApiResponse::new(StatusCode::BAD_REQUEST, "Error reading posts", None)
-                    .into_response()
-            }
-        }
+        ApiResponse::new(StatusCode::BAD_REQUEST, "Error reading posts", None)
+            .into_response()
     }
 }
 
@@ -183,7 +140,7 @@ pub async fn delete(
                 )
             }
             Err(e) => {
-                let msg = format!("Post with id {} not found", post_id);
+                let msg = format!("Error deleting post: {:?}", e);
                 error!("{}", &msg);
                 ApiResponse::new(StatusCode::NOT_FOUND, &msg, None)
             }
