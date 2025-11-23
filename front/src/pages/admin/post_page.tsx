@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate, useLocation } from 'react-router'; // 1. Añadido useParams
 import { useTranslation } from "react-i18next";
-import { Button, Tooltip, Flex, Typography, Input, DatePicker, Switch } from 'antd';
+import { Button, Tooltip, Flex, Typography, Input, DatePicker, Switch, Alert } from 'antd';
 import { MDXEditor } from '@mdxeditor/editor'
 import CheckOutlined from '@ant-design/icons/CheckOutlined';
 import CloseOutlined from '@ant-design/icons/CloseOutlined';
@@ -29,7 +29,7 @@ import '@mdxeditor/editor/style.css'
 import '@/pages/admin/editor.css'
 import ModeContext from "@/components/mode_context";
 import type Post from "@/models/post";
-import { loadData } from "@/common/utils";
+import { loadData, debounce } from "@/common/utils";
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -44,6 +44,9 @@ interface Props {
 interface State {
     post?: Post;
     originalContent?: string;
+    showMessage: boolean;
+    messageText?: string;
+    messageType?: "success" | "error" | "info" | "warning";
 }
 
 
@@ -58,11 +61,12 @@ export class InnerPage extends React.Component<Props, State> {
                 published_at: new Date(),
                 comment_on: true,
                 private: true,
-                content: "# Título 1\n\nContenido del **post**...",
+                content: "",
                 excerpt: "",
                 meta: "",
             } as Post,
-            originalContent: ""
+            originalContent: "",
+            showMessage: false,
         }
     }
 
@@ -80,12 +84,46 @@ export class InnerPage extends React.Component<Props, State> {
         }
     }
 
+    showMessage = (text: string, type: 'success' | 'error' | 'info' | 'warning') => {
+        this.setState({
+            showMessage: true,
+            messageText: text,
+            messageType: type
+        });
+        this.hideMessage();
+    }
+
+    hideMessage = debounce(() => {
+        this.setState({ showMessage: false });
+    }, 3000);
+
+    onSavePost = async (goToList: boolean) => {
+        if (!this.state.post || !this.state.post.title || this.state.post.title === "") {
+            this.showMessage(this.props.t("Title is required"), "error");
+            return;
+        }
+        if(goToList) {
+            this.props.navigate("/admin/posts");
+        }
+    }
+
     // 5. El método render ahora solo devuelve el CustomTable
     render = () => {
+        const { showMessage, messageText, messageType } = this.state;
         const { t, isDarkMode } = this.props;
         const labelWidth = 130;
         return (
             <Flex vertical gap="middle" style={{ maxWidth: 1050 }}>
+                {showMessage &&
+                    <Alert
+                        message={messageText}
+                        type={messageType}
+                        showIcon
+                        closable
+                        onClose={() => this.setState({ showMessage: false })}
+                        style={{ margin: 16 }}
+                    />
+                }
                 <Flex vertical gap="middle">
                     {
                         this.state.post && this.state.post.id &&
@@ -112,18 +150,21 @@ export class InnerPage extends React.Component<Props, State> {
                                         shape="circle"
                                         type="primary"
                                         icon={<SaveOutlined />}
+                                        onClick={() => this.onSavePost(false)}
                                     />
                                 </Tooltip>
                                 <Tooltip title={t("Save and go to the posts list")}>
                                     <Button
                                         shape="circle"
                                         icon={<CheckOutlined />}
+                                        onClick={() => this.onSavePost(true)}
                                     />
                                 </Tooltip>
                                 <Tooltip title={t("Cancel and go to the posts list")}>
                                     <Button
                                         shape="circle"
                                         icon={<CloseOutlined />}
+                                        onClick={() => this.props.navigate("/admin/posts")}
                                     />
                                 </Tooltip>
                             </>
