@@ -46,10 +46,10 @@ pub async fn create(
 
 pub async fn update(
     State(app_state): State<Arc<AppState>>,
-    Json(mut tag): Json<Tag>,
+    Json(tag): Json<Tag>,
 ) -> impl IntoResponse {
     debug!("Update tag: {:?}", tag);
-    match Tag::update(&app_state.pool, &mut tag).await {
+    match Tag::update(&app_state.pool, tag).await {
         Ok(tag) => {
             debug!("Tag updated: {:?}", tag);
             ApiResponse::new(

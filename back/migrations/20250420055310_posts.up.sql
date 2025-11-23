@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS posts (
     content TEXT DEFAULT '',
     excerpt TEXT DEFAULT '',
     meta VARCHAR DEFAULT '',
+    outline VARCHAR DEFAULT '',
     comment_on boolean DEFAULT FALSE,
     private boolean DEFAULT TRUE,
     audio_url VARCHAR,

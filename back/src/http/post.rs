@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use regex::Regex;
 
 use axum::{
     Json, Router,
@@ -11,7 +12,7 @@ use tracing::{debug, error};
 
 use crate::constants::{DEFAULT_LIMIT, DEFAULT_PAGE};
 use crate::models::{
-    ApiResponse, AppState, NewPost, PagedResponse, Pagination, Post, ReadPostParams,
+    ApiResponse, AppState, NewPost, PagedResponse, Pagination, Post, ReadPostParams, Tag
 };
 
 pub fn post_router() -> Router<Arc<AppState>> {
@@ -24,11 +25,19 @@ pub fn post_router() -> Router<Arc<AppState>> {
 
 pub async fn create(
     State(app_state): State<Arc<AppState>>,
-    Json(mut post): Json<NewPost>,
+    Json(post): Json<NewPost>,
 ) -> impl IntoResponse {
     debug!("Post: {:?}", post);
-    match Post::create(&app_state.pool, &mut post).await {
+    match Post::create(&app_state.pool, &post).await {
         Ok(post) => {
+            let string_tags = get_tags( &post.content);
+            let tags = Tag::create_or_update(&app_state.pool, string_tags)
+                .await
+                .unwrap_or_default();
+            let id_tags = tags.iter().map(|t| t.id).collect::<Vec<i32>>();
+            Post::assign_tags(&app_state.pool, post.id, id_tags)
+                .await
+                .unwrap_or_default();
             debug!("Post created: {:?}", post);
             ApiResponse::new(
                 StatusCode::CREATED,
@@ -165,4 +174,15 @@ pub async fn delete(
     } else {
         ApiResponse::new(StatusCode::BAD_REQUEST, "post_id is mandatory", None)
     }
+}
+
+fn get_tags(content: &str) -> Vec<String> {
+    let re = Regex::new(r"#(\w+)").unwrap();
+    let mut tags = Vec::new();
+    for cap in re.captures_iter(content) {
+        if let Some(tag) = cap.get(1) {
+            tags.push(tag.as_str().to_string());
+        }
+    }
+    tags
 }

@@ -1,7 +1,7 @@
 export default interface Tag {
-    id?: number;
+    id: number;
     tag: string;
-    slug: string;
+    slug?: string;
     created_at?: Date;
     updated_at?: Date;
 }

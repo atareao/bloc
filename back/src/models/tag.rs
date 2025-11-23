@@ -1,11 +1,12 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use slug::slugify;
 use sqlx::{
     Error, FromRow, Row,
     postgres::{PgPool, PgRow},
-    query_as,
-    query,
+    query, query_as,
 };
+use std::collections::HashSet;
 use tracing::debug;
 
 use crate::constants::{DEFAULT_LIMIT, DEFAULT_PAGE};
@@ -13,14 +14,13 @@ use crate::constants::{DEFAULT_LIMIT, DEFAULT_PAGE};
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct NewTag {
     pub tag: String,
-    pub slug: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, FromRow)]
 pub struct Tag {
     pub id: i32,
     pub tag: String,
-    pub slug: Option<String>,
+    pub slug: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -40,9 +40,7 @@ pub struct ReadTagParams {
 impl Tag {
     pub async fn create(pool: &PgPool, tag: &mut NewTag) -> Result<Tag, Error> {
         let now = Utc::now();
-        if tag.slug.is_none() {
-            tag.slug = Some(slug::slugify(&tag.tag));
-        }
+        let slug = slugify(&tag.tag);
         let sql = "INSERT INTO tags (
                 tag,
                 slug,
@@ -54,17 +52,15 @@ impl Tag {
             ) RETURNING *";
         query_as::<_, Tag>(sql)
             .bind(&tag.tag)
-            .bind(&tag.slug)
+            .bind(&slug)
             .bind(now)
             .bind(now)
             .fetch_one(pool)
             .await
     }
 
-    pub async fn update(pool: &PgPool, tag: &mut Tag) -> Result<Tag, Error> {
-        if tag.slug.is_none() {
-            tag.slug = Some(slug::slugify(&tag.tag));
-        }
+    pub async fn update(pool: &PgPool, tag: Tag) -> Result<Tag, Error> {
+        let slug = slugify(&tag.tag);
         let sql = "UPDATE tags set 
                 tag = $1,
                 slug = $2,
@@ -75,37 +71,56 @@ impl Tag {
         let now = Utc::now();
         query_as::<_, Tag>(sql)
             .bind(&tag.tag)
-            .bind(&tag.slug)
+            .bind(&slug)
             .bind(now)
             .bind(tag.id)
             .fetch_one(pool)
             .await
     }
 
+    pub async fn create_or_update(
+        pool: &PgPool,
+        string_tags: Vec<String>,
+    ) -> Result<Vec<Tag>, Error> {
+        if string_tags.is_empty() {
+            return Ok(Vec::new());
+        }
+        let unique_tags_set: HashSet<String> = string_tags.into_iter().collect();
+        let unique_tags: Vec<String> = unique_tags_set.into_iter().collect();
+        let slugs: Vec<String> = unique_tags.iter().map(|t| slugify(t)).collect();
+        let sql_upsert_tags = r#"
+        WITH upserted_tags AS (
+            INSERT INTO tags (tag, slug)
+            SELECT * FROM UNNEST($1::VARCHAR[], $2::VARCHAR[]) 
+            ON CONFLICT (tag) DO NOTHING 
+            RETURNING id, tag, slug, created_at, updated_at
+        )
+        SELECT id, tag, slug, created_at, updated_at FROM upserted_tags
+        UNION ALL
+        SELECT id, tag, slug, created_at, updated_at FROM tags
+        WHERE tag = ANY($1)
+    "#;
+        sqlx::query_as::<_, Tag>(sql_upsert_tags)
+            .bind(&unique_tags as &[String])
+            .bind(&slugs as &[String])
+            .fetch_all(pool)
+            .await
+    }
+
     pub async fn read(pool: &PgPool, id: i32) -> Result<Tag, Error> {
         let sql = "SELECT * FROM tags WHERE id = $1";
-        query_as::<_, Tag>(sql)
-            .bind(id)
-            .fetch_one(pool)
-            .await
+        query_as::<_, Tag>(sql).bind(id).fetch_one(pool).await
     }
 
     pub async fn read_tags_for_post(pool: &PgPool, post_id: i32) -> Result<Tag, Error> {
         let sql = "SELECT t.* FROM tags t
             INNER JOIN post_tags pt ON t.id = pt.tag_id
             WHERE pt.post_id = $1";
-        query_as::<_, Tag>(sql)
-            .bind(post_id)
-            .fetch_one(pool)
-            .await
+        query_as::<_, Tag>(sql).bind(post_id).fetch_one(pool).await
     }
 
-
     pub async fn count_paged(pool: &PgPool, params: &ReadTagParams) -> Result<i64, Error> {
-        let filters = vec![
-            ("tag", &params.tag),
-            ("slug", &params.slug),
-        ];
+        let filters = vec![("tag", &params.tag), ("slug", &params.slug)];
         let active_filters: Vec<(&str, String)> = filters
             .into_iter()
             .filter_map(|(col, val)| val.as_ref().map(|v| (col, v.to_string())))
@@ -128,14 +143,8 @@ impl Tag {
             .await
     }
 
-    pub async fn read_paged(
-        pool: &PgPool,
-        params: &ReadTagParams,
-    ) -> Result<Vec<Tag>, Error> {
-        let filters = vec![
-            ("tag", &params.tag),
-            ("slug", &params.slug),
-        ];
+    pub async fn read_paged(pool: &PgPool, params: &ReadTagParams) -> Result<Vec<Tag>, Error> {
+        let filters = vec![("tag", &params.tag), ("slug", &params.slug)];
         let active_filters: Vec<(&str, String)> = filters
             .into_iter()
             .filter_map(|(col, val)| val.as_ref().map(|v| (col, v.to_string())))
@@ -164,19 +173,11 @@ impl Tag {
         }
         let limit = params.limit.unwrap_or(DEFAULT_LIMIT) as i32;
         let offset = ((params.page.unwrap_or(DEFAULT_PAGE) - 1) as i32) * limit;
-        query
-            .bind(limit)
-            .bind(offset)
-            .fetch_all(pool)
-            .await
+        query.bind(limit).bind(offset).fetch_all(pool).await
     }
 
     pub async fn delete(pool: &PgPool, tag_id: i32) -> Result<Tag, Error> {
         let sql = "DELETE FROM tags WHERE id = $1 RETURNING *";
-        query_as::<_, Tag>(sql)
-            .bind(tag_id)
-            .fetch_one(pool)
-            .await
+        query_as::<_, Tag>(sql).bind(tag_id).fetch_one(pool).await
     }
 }
-

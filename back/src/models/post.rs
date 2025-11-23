@@ -1,12 +1,11 @@
 use chrono::{DateTime, Utc};
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 use slug::slugify;
 use sqlx::{
-    Error, Row,
-    FromRow,
+    Error, FromRow, Row,
     postgres::{PgPool, PgRow},
-    query,
-    query_as,
+    query, query_as,
 };
 use tracing::debug;
 
@@ -16,9 +15,10 @@ use crate::constants::{DEFAULT_LIMIT, DEFAULT_PAGE};
 pub struct NewPost {
     pub title: Option<String>,
     pub slug: Option<String>,
-    pub content: Option<String>,
+    pub content: String,
     pub excerpt: Option<String>,
     pub meta: Option<String>,
+    pub outline: Option<String>,
     pub comment_on: Option<bool>,
     pub private: Option<bool>,
     pub audio_url: Option<String>,
@@ -30,9 +30,10 @@ pub struct Post {
     pub id: i32,
     pub title: String,
     pub slug: String,
-    pub content: Option<String>,
+    pub content: String,
     pub excerpt: Option<String>,
     pub meta: Option<String>,
+    pub outline: Option<String>,
     pub comment_on: Option<bool>,
     pub private: Option<bool>,
     pub audio_url: Option<String>,
@@ -53,10 +54,13 @@ pub struct ReadPostParams {
 }
 
 impl Post {
-    pub async fn create(pool: &PgPool, post: &mut NewPost) -> Result<Post, Error> {
-        if post.slug.is_none() {
-            post.slug = post.title.as_ref().map(slugify);
+    pub async fn create(pool: &PgPool, post: &NewPost) -> Result<Post, Error> {
+        if post.content.is_empty() {
+            return Err(Error::Decode("Content cannot be empty".into()));
         }
+        let title =
+            get_title(&post.content).ok_or(Error::Decode("Not found title in content".into()))?;
+        let slug = slugify(&title);
         let now = Utc::now();
         let sql = "INSERT INTO posts (
                 title,
@@ -64,6 +68,7 @@ impl Post {
                 content,
                 excerpt, 
                 meta,
+                outline,
                 comment_on,
                 private,
                 audio_url,
@@ -72,14 +77,15 @@ impl Post {
                 updated_at
             )
             VALUES (
-                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
             ) RETURNING *";
         query_as::<_, Post>(sql)
-            .bind(&post.title)
-            .bind(&post.slug)
+            .bind(title)
+            .bind(slug)
             .bind(&post.content)
             .bind(&post.excerpt)
             .bind(&post.meta)
+            .bind(&post.outline)
             .bind(post.comment_on)
             .bind(post.private)
             .bind(&post.audio_url)
@@ -90,29 +96,36 @@ impl Post {
             .await
     }
 
-    pub async fn update(pool: &PgPool, post: &mut Post) -> Result<Post, Error> {
-        post.slug = slugify(post.title.clone());
+    pub async fn update(pool: &PgPool, post: &Post) -> Result<Post, Error> {
+        if post.content.is_empty() {
+            return Err(Error::Decode("Content cannot be empty".into()));
+        }
+        let title =
+            get_title(&post.content).ok_or(Error::Decode("Not found title in content".into()))?;
+        let slug = slugify(&title);
         let sql = "UPDATE posts set 
                 title = $1,
                 slug = $2,
                 content = $3,
                 excerpt = $4,
                 meta = $5,
-                comment_on = $6,
-                private = $7,
-                audio_url = $8,
-                published_at = $9,
-                updated_at = $10
+                outline = $6,
+                comment_on = $7,
+                private = $8,
+                audio_url = $9,
+                published_at = $10,
+                updated_at = $11
             WHERE
-                id = $11
+                id = $12
             RETURNING *";
         let now = Utc::now();
         query_as::<_, Post>(sql)
-            .bind(&post.title)
-            .bind(&post.slug)
+            .bind(&title)
+            .bind(&slug)
             .bind(&post.content)
             .bind(&post.excerpt)
             .bind(&post.meta)
+            .bind(&post.outline)
             .bind(post.comment_on)
             .bind(post.private)
             .bind(&post.audio_url)
@@ -123,12 +136,33 @@ impl Post {
             .await
     }
 
+    pub async fn assign_tags(
+        pool: &PgPool,
+        post_id: i32,
+        tag_ids: Vec<i32>,
+    ) -> Result<(), Error> {
+        if tag_ids.is_empty() {
+            return Ok(());
+        }
+        let post_ids_para_relacion: Vec<i32> = vec![post_id; tag_ids.len()];
+
+        let sql_insert_relations = r#"
+            INSERT INTO posts_tags (post_id, tag_id)
+            SELECT * FROM UNNEST($1::INTEGER[], $2::INTEGER[]) 
+            ON CONFLICT (post_id, tag_id) DO NOTHING;
+        "#;
+        sqlx::query(sql_insert_relations)
+            .bind(&post_ids_para_relacion as &[i32]) // $1: Array de post_ids
+            .bind(&tag_ids as &[i32]) // $2: Array de tag_ids
+            .execute(pool)
+            .await?;
+
+        Ok(())
+    }
+
     pub async fn read(pool: &PgPool, id: i32) -> Result<Post, Error> {
         let sql = "SELECT * FROM posts WHERE id = $1";
-        query_as::<_, Post>(sql)
-            .bind(id)
-            .fetch_one(pool)
-            .await
+        query_as::<_, Post>(sql).bind(id).fetch_one(pool).await
     }
 
     pub async fn count_paged(pool: &PgPool, params: &ReadPostParams) -> Result<i64, Error> {
@@ -157,10 +191,7 @@ impl Post {
 
     pub async fn read_by_slug(pool: &PgPool, slug: &str) -> Result<Post, Error> {
         let sql = "SELECT * FROM posts WHERE slug = $1";
-        query_as::<_, Post>(sql)
-            .bind(slug)
-            .fetch_one(pool)
-            .await
+        query_as::<_, Post>(sql).bind(slug).fetch_one(pool).await
     }
 
     pub async fn read_paged(pool: &PgPool, params: &ReadPostParams) -> Result<Vec<Post>, Error> {
@@ -193,18 +224,21 @@ impl Post {
         }
         let limit = params.limit.unwrap_or(DEFAULT_LIMIT) as i32;
         let offset = ((params.page.unwrap_or(DEFAULT_PAGE) - 1) as i32) * limit;
-        query
-            .bind(limit)
-            .bind(offset)
-            .fetch_all(pool)
-            .await
+        query.bind(limit).bind(offset).fetch_all(pool).await
     }
 
     pub async fn delete(pool: &PgPool, post_id: i32) -> Result<Post, Error> {
         let sql = "DELETE FROM posts WHERE id = $1 RETURNING *";
-        query_as::<_, Post>(sql)
-            .bind(post_id)
-            .fetch_one(pool)
-            .await
+        query_as::<_, Post>(sql).bind(post_id).fetch_one(pool).await
     }
+}
+
+fn get_title(content: &str) -> Option<String> {
+    let re = Regex::new(r"^#\s+(.*)$").unwrap();
+    let first_line = content.lines().next()?;
+    if let Some(captures) = re.captures(first_line) {
+        let title = captures.get(1)?.as_str().trim();
+        return Some(title.to_string());
+    }
+    None
 }

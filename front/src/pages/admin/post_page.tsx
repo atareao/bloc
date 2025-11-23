@@ -21,7 +21,7 @@ import {
     diffSourcePlugin,
     codeBlockPlugin,
     codeMirrorPlugin,
-    //directivesPlugin,
+    directivesPlugin,
     KitchenSinkToolbar,
 } from '@mdxeditor/editor'
 
@@ -29,7 +29,9 @@ import '@mdxeditor/editor/style.css'
 import '@/pages/admin/editor.css'
 import ModeContext from "@/components/mode_context";
 import type Post from "@/models/post";
-import { loadData, debounce } from "@/common/utils";
+import { loadData, debounce, saveData, updateData } from "@/common/utils";
+import {YoutubeDirectiveDescriptor} from '@/components/descriptors/youtube_descriptor';
+import {YouTubeButton} from '@/components/embeds/youtube_embed'
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -57,7 +59,6 @@ export class InnerPage extends React.Component<Props, State> {
         super(props);
         this.state = {
             post: {
-                title: "",
                 published_at: new Date(),
                 comment_on: true,
                 private: true,
@@ -71,6 +72,7 @@ export class InnerPage extends React.Component<Props, State> {
     }
 
     componentDidMount = async () => {
+        console.log("PostPage mounted with slug:", this.props.postSlug);
         const response = await loadData<Post>("posts", new Map([["slug", this.props.postSlug || ""]]));
         if (response.status === 200 && response.data) {
             console.log("Post loaded:", response.data);
@@ -98,20 +100,52 @@ export class InnerPage extends React.Component<Props, State> {
     }, 3000);
 
     onSavePost = async (goToList: boolean) => {
-        if (!this.state.post || !this.state.post.title || this.state.post.title === "") {
-            this.showMessage(this.props.t("Title is required"), "error");
+        if (!this.state.post || !this.state.post.content || this.state.post.content === "") {
+            this.showMessage(this.props.t("Content can not be empty"), "error");
             return;
         }
-        if(goToList) {
+        if (!this.state.post.content.startsWith("# ")) {
+            this.showMessage(this.props.t("Content must starts with title '# '"), "error");
+            return;
+        }
+        let response;
+        if (this.state.post.id) {
+            // update existing post
+            response = await updateData<Post>(`posts`, this.state.post);
+        } else {
+            // create new post
+            response = await saveData<Post>("posts", this.state.post);
+        }
+
+        if (response.status === 200 && response.data) {
+            this.showMessage(this.props.t("Post saved successfully"), "success");
+            this.setState({
+                post: {
+                    ...this.state.post,
+                    ...response.data
+                }
+            });
+            if (goToList) {
+                this.props.navigate("/admin/posts");
+            } else {
+                this.props.navigate(`/admin/posts/${response.data.slug}`);
+            }
+        } else {
+            this.showMessage(this.props.t("Error saving post"), "error");
+        }
+
+        if (goToList) {
             this.props.navigate("/admin/posts");
         }
     }
-
-    // 5. El método render ahora solo devuelve el CustomTable
     render = () => {
-        const { showMessage, messageText, messageType } = this.state;
+        console.log("Rendering PostPage with post:", this.state.post);
+        const { showMessage, messageText, messageType, post, originalContent } = this.state;
+        const content = post?.content || "vacío?";
+        const labelWidth = 120;
+        console.log("Content:",content);
         const { t, isDarkMode } = this.props;
-        const labelWidth = 130;
+        console.log("MDXEditor markdown prop:", this.state.post?.content || "");
         return (
             <Flex vertical gap="middle" style={{ maxWidth: 1050 }}>
                 {showMessage &&
@@ -126,57 +160,33 @@ export class InnerPage extends React.Component<Props, State> {
                 }
                 <Flex vertical gap="middle">
                     {
-                        this.state.post && this.state.post.id &&
+                        post && post.id &&
                         <Flex>
                             <Text style={{ minWidth: labelWidth }}>{t("Id")}:</Text>
                             <Input
                                 placeholder={t("Id")}
-                                value={this.state.post?.id}
+                                value={post?.id}
                                 disabled={true}
                             />
                         </Flex>
                     }
-                    <Flex gap="middle">
-                        <Text style={{ minWidth: labelWidth }}>{t("Title")}:</Text>
-                        <Input
-                            placeholder={t("Title")}
-                            value={this.state.post?.title}
-                        />
-                        {
-                            this.state.post && this.state.post.id === undefined &&
-                            <>
-                                <Tooltip title={t("Save and stay here")}>
-                                    <Button
-                                        shape="circle"
-                                        type="primary"
-                                        icon={<SaveOutlined />}
-                                        onClick={() => this.onSavePost(false)}
-                                    />
-                                </Tooltip>
-                                <Tooltip title={t("Save and go to the posts list")}>
-                                    <Button
-                                        shape="circle"
-                                        icon={<CheckOutlined />}
-                                        onClick={() => this.onSavePost(true)}
-                                    />
-                                </Tooltip>
-                                <Tooltip title={t("Cancel and go to the posts list")}>
-                                    <Button
-                                        shape="circle"
-                                        icon={<CloseOutlined />}
-                                        onClick={() => this.props.navigate("/admin/posts")}
-                                    />
-                                </Tooltip>
-                            </>
-                        }
-                    </Flex>
                     {
-                        this.state.post && this.state.post.id &&
+                        post && post.title &&
+                        <Flex gap="middle">
+                            <Text style={{ minWidth: labelWidth }}>{t("Title")}:</Text>
+                            <Input
+                                placeholder={t("Title")}
+                                value={post?.title}
+                            />
+                        </Flex>
+                    }
+                    {
+                        post && post.id &&
                         <Flex gap="middle">
                             <Text style={{ minWidth: labelWidth }}>{t("Slug")}:</Text>
                             <Input
                                 placeholder={t("Slug")}
-                                value={this.state.post?.slug}
+                                value={post?.slug}
                             />
                         </Flex>
                     }
@@ -187,9 +197,31 @@ export class InnerPage extends React.Component<Props, State> {
                             placeholder={t("Publish at")}
                         />
                         <Text>{t("Comments")}:</Text>
-                        <Switch checked={this.state.post?.comment_on} />
+                        <Switch checked={post?.comment_on} />
                         <Text>{t("Private")}:</Text>
-                        <Switch checked={this.state.post?.private} />
+                        <Switch checked={post?.private} />
+                        <Tooltip title={t("Save and stay here")}>
+                            <Button
+                                shape="circle"
+                                type="primary"
+                                icon={<SaveOutlined />}
+                                onClick={() => this.onSavePost(false)}
+                            />
+                        </Tooltip>
+                        <Tooltip title={t("Save and go to the posts list")}>
+                            <Button
+                                shape="circle"
+                                icon={<CheckOutlined />}
+                                onClick={() => this.onSavePost(true)}
+                            />
+                        </Tooltip>
+                        <Tooltip title={t("Cancel and go to the posts list")}>
+                            <Button
+                                shape="circle"
+                                icon={<CloseOutlined />}
+                                onClick={() => this.props.navigate("/admin/posts")}
+                            />
+                        </Tooltip>
                     </Flex>
                     <Flex gap="middle">
                         <Text style={{ minWidth: labelWidth }}>{t("Meta description")}:</Text>
@@ -201,6 +233,7 @@ export class InnerPage extends React.Component<Props, State> {
                 </Flex>
                 <Flex>
                     <MDXEditor
+                        key={post?.id || "new-post"}
                         plugins={[
                             listsPlugin(),
                             quotePlugin(),
@@ -214,22 +247,21 @@ export class InnerPage extends React.Component<Props, State> {
                             codeBlockPlugin({ defaultCodeBlockLanguage: 'txt' }),
                             //sandpackPlugin({ sandpackConfig: virtuosoSampleSandpackConfig }),
                             codeMirrorPlugin({ codeBlockLanguages: { js: 'JavaScript', css: 'CSS', txt: 'text', tsx: 'TypeScript' } }),
-                            //directivesPlugin({ directiveDescriptors: [YoutubeDirectiveDescriptor, AdmonitionDirectiveDescriptor] }),
-                            diffSourcePlugin({ diffMarkdown: this.state.originalContent, viewMode: 'rich-text' }),
+                            directivesPlugin({ directiveDescriptors: [YoutubeDirectiveDescriptor] }),
+                            diffSourcePlugin({ diffMarkdown: originalContent, viewMode: 'rich-text' }),
                             markdownShortcutPlugin(),
                             toolbarPlugin({
                                 toolbarClassName: 'my-toolbar',
-                                toolbarContents: () => <KitchenSinkToolbar />
+                                toolbarContents: () => [<KitchenSinkToolbar />, <YouTubeButton />]
                             }),
                         ]}
                         className={isDarkMode ? "dark-theme dark-editor" : "white-editor"}
-                        markdown={this.state.post?.content || ""}
+                        markdown={content}
                         onChange={(value) => {
                             this.setState((prevState) => ({
                                 post: {
                                     ...prevState.post!,
                                     content: value
-
                                 }
                             }));
                         }}
