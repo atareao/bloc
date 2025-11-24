@@ -6,12 +6,12 @@ import { EditFilled, DeleteFilled, PlusOutlined, FundProjectionScreenOutlined } 
 import type Post from "@/models/post"; // Alias para Rule
 
 // Importamos CustomTable y los tipos necesarios
+import AdminHeaderContext from "@/components/admin_header_context";
 import CustomTable from '@/components/custom_table';
 import type { FieldDefinition } from '@/common/types';
 import type { DialogMessages } from '@/components/dialogs/custom_dialog';
 
 // 1. Constantes de configuración (fuera de la clase)
-const TITLE = "Posts";
 const ENDPOINT = "posts";
 
 // Definición de los campos (tipados para Item, que es Rule)
@@ -33,32 +33,46 @@ interface Props {
 
 // La clase ya no necesita State, ya que CustomTable maneja el estado de la tabla.
 export class InnerPage extends React.Component<Props, {}> {
+    static contextType = AdminHeaderContext;
+    declare context: React.ContextType<typeof AdminHeaderContext>;
 
     // 3. Método para renderizar el botón "Añadir"
-    private renderHeaderAction = () => {
-        return (
+    componentDidMount = async () => {
+        this.context.setHeaderButtons([
             <Button
+                shape="circle"
                 type="primary"
                 onClick={() => this.props.navigate("/admin/posts/[new-post]")} // Llama al manejador interno de CustomTable para abrir el diálogo CREATE
                 icon={<PlusOutlined />}
             >
-                {this.props.t("Add Post")}
             </Button>
-        );
-    };
+        ]);
+    }
 
     // 4. Método para renderizar la columna de acciones
-    private renderActionColumn = (post: Post, onEdit: (post: Post) => void, onDelete: (post: Post) => void) => {
+    private renderActionColumn = (post: Post, onDelete: (post: Post) => void) => {
         return (
             <Space size="small">
-                <Button onClick={() => this.props.navigate(`/${post.slug}`)} title={this.props.t('Preview')}>
+                <Button
+                    shape="circle"
+                    onClick={() => this.props.navigate(`/${post.slug}`)}
+                    title={this.props.t('Preview')}
+                >
                     <FundProjectionScreenOutlined />
                 </Button>
 
-                <Button onClick={() => this.props.navigate(`/admin/posts/${post.slug}`)} title={this.props.t('Edit')}>
+                <Button
+                    shape="circle"
+                    onClick={() => this.props.navigate(`/admin/posts/${post.slug}`)}
+                    title={this.props.t('Edit')}
+                >
                     <EditFilled />
                 </Button>
-                <Button onClick={() => onDelete(post)} title={this.props.t('Delete')} danger>
+                <Button
+                    shape="circle"
+                    onClick={() => onDelete(post)}
+                    title={this.props.t('Delete')} danger
+                >
                     <DeleteFilled />
                 </Button>
             </Space>
@@ -80,13 +94,11 @@ export class InnerPage extends React.Component<Props, {}> {
         ];
         return (
             <CustomTable<Post>
-                title={TITLE}
                 endpoint={ENDPOINT}
                 fields={fields}
                 dialogMessages={RULE_DIALOG_MESSAGES}
                 t={this.props.t}
                 hasActions={true}
-                renderHeaderAction={this.renderHeaderAction}
                 renderActionColumn={this.renderActionColumn}
             />
         );

@@ -29,7 +29,7 @@ interface DialogRendererParams<T> {
 
 // Añadir prop dialogRenderer
 type Props<T extends { id: number | string }> = {
-    title: string;
+    title?: string;
     endpoint: string;
     params?: Map<string, string>;
     fields: FieldDefinition<T>[];
@@ -314,7 +314,6 @@ export default class CustomTable<T extends { id: number | string }> extends Reac
     }
 
     render = () => {
-        const titleText = this.props.t(this.props.title);
         const { hasActions, renderHeaderAction } = this.props;
 
         let dialogUI: React.ReactNode | null = null;
@@ -344,6 +343,12 @@ export default class CustomTable<T extends { id: number | string }> extends Reac
                 );
             }
         }
+
+        const titleText = this.props.title ? (
+            <Text style={{ fontSize: '24px' }} strong>{this.props.t(this.props.title)}</Text>
+        ) : (
+            <span></span>
+        );
         
         const headerUI = hasActions && renderHeaderAction ? (
             renderHeaderAction(this.handleCreate)

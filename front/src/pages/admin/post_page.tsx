@@ -1,7 +1,9 @@
 import React from "react";
 import { useNavigate, useLocation } from 'react-router'; // 1. Añadido useParams
 import { useTranslation } from "react-i18next";
-import { Button, Tooltip, Flex, Typography, Input, DatePicker, Switch, Alert } from 'antd';
+import { Button, Tooltip, Flex, Typography, Input, DatePicker, Switch, Alert, Tabs } from 'antd';
+import type { TabsProps } from 'antd';
+import dayjs from 'dayjs';
 import { MDXEditor } from '@mdxeditor/editor'
 import CheckOutlined from '@ant-design/icons/CheckOutlined';
 import CloseOutlined from '@ant-design/icons/CloseOutlined';
@@ -31,6 +33,7 @@ import ModeContext from "@/components/mode_context";
 import AdminHeaderContext from "@/components/admin_header_context";
 import type Post from "@/models/post";
 import { loadData, debounce, saveData, updateData } from "@/common/utils";
+import TabPanel from "@/components/tab_panel";
 import { YoutubeDirectiveDescriptor } from '@/components/descriptors/youtube_descriptor';
 import { YouTubeButton } from '@/components/embeds/youtube_embed'
 
@@ -50,6 +53,7 @@ interface State {
     showMessage: boolean;
     messageText?: string;
     messageType?: "success" | "error" | "info" | "warning";
+    tabValue: number;
 }
 
 
@@ -71,6 +75,7 @@ export class InnerPage extends React.Component<Props, State> {
             } as Post,
             originalContent: "",
             showMessage: false,
+            tabValue: 0,
         }
     }
 
@@ -171,13 +176,163 @@ export class InnerPage extends React.Component<Props, State> {
             this.props.navigate("/admin/posts");
         }
     }
-    render = () => {
-        console.log("Rendering PostPage with post:", this.state.post);
-        const { showMessage, messageText, messageType, post, originalContent } = this.state;
+
+
+    getTabsItems = (): TabsProps['items'] => {
+        const { t, isDarkMode } = this.props;
+        const { tabValue, post, originalContent } = this.state;
         const content = post?.content || "vacío?";
         const labelWidth = 120;
+        const tabEditor = (
+            <MDXEditor
+                key={post?.id || "new-post"}
+                plugins={[
+                    listsPlugin(),
+                    quotePlugin(),
+                    headingsPlugin(),
+                    linkPlugin(),
+                    linkDialogPlugin(),
+                    imagePlugin(),
+                    tablePlugin(),
+                    thematicBreakPlugin(),
+                    frontmatterPlugin(),
+                    codeBlockPlugin({ defaultCodeBlockLanguage: 'txt' }),
+                    //sandpackPlugin({ sandpackConfig: virtuosoSampleSandpackConfig }),
+                    codeMirrorPlugin({ codeBlockLanguages: { js: 'JavaScript', css: 'CSS', txt: 'text', tsx: 'TypeScript' } }),
+                    directivesPlugin({ directiveDescriptors: [YoutubeDirectiveDescriptor] }),
+                    diffSourcePlugin({ diffMarkdown: originalContent, viewMode: 'rich-text' }),
+                    markdownShortcutPlugin(),
+                    toolbarPlugin({
+                        toolbarClassName: 'my-toolbar',
+                        toolbarContents: () => [<KitchenSinkToolbar />, <YouTubeButton />]
+                    }),
+                ]}
+                className={isDarkMode ? "dark-theme dark-editor" : "white-editor"}
+                markdown={content}
+                onChange={(value) => {
+                    this.setState((prevState) => ({
+                        post: {
+                            ...prevState.post!,
+                            content: value
+                        }
+                    }));
+                }}
+                overlayContainer={null}
+            />
+
+        );
+        const tabProperties = (
+            <Flex style={{ minWidth: 1100 }} gap="middle">
+                <Flex vertical gap="middle">
+                    <Flex gap="middle">
+                        <Text style={{ minWidth: labelWidth }}>{t("Id")}:</Text>
+                        <Input
+                            placeholder={t("Id")}
+                            value={post?.id}
+                            disabled={true}
+                        />
+                    </Flex>
+                    <Flex gap="middle">
+                        <Text style={{ minWidth: labelWidth }}>{t("Title")}:</Text>
+                        <Input
+                            placeholder={t("Title")}
+                            value={post?.title}
+                            disabled={true}
+                        />
+                    </Flex>
+                    <Flex gap="middle">
+                        <Text style={{ minWidth: labelWidth }}>{t("Slug")}:</Text>
+                        <Input
+                            placeholder={t("Slug")}
+                            value={post?.slug}
+                            disabled={true}
+                        />
+                    </Flex>
+                    <Flex gap="middle">
+                        <Text style={{ minWidth: labelWidth }}>{t("Publish at")}:</Text>
+                        <DatePicker
+                            showTime
+                            value={post?.published_at ? dayjs(post.published_at): undefined}
+                            placeholder={t("Publish at")}
+                            onChange={(published_at) => {
+                                this.setState((prevState) => ({
+                                    post: {
+                                        ...prevState.post!,
+                                        published_at: published_at ? published_at.toDate() : undefined,
+                                    }
+                                }));
+                            }}
+                        />
+                        <Text>{t("Comments")}:</Text>
+                        <Switch
+                            checked={post?.comment_on}
+                            onChange={(checked) => {
+                                this.setState((prevState) => ({
+                                    post: {
+                                        ...prevState.post!,
+                                        comment_on: checked,
+                                    }
+                                }));
+                            }}
+                        />
+                        <Text>{t("Private")}:</Text>
+                        <Switch
+                            checked={post?.private}
+                            onChange={(checked) => {
+                                this.setState((prevState) => ({
+                                    post: {
+                                        ...prevState.post!,
+                                        private: checked,
+                                    }
+                                }));
+                            }}
+                        />
+                    </Flex>
+                </Flex>
+            </Flex>
+
+        );
+        const tabMeta = (
+            <Flex style={{ minWidth: 1100 }} gap="middle">
+                <Flex vertical gap="middle">
+                    <Flex gap="middle">
+                        <Text style={{ minWidth: labelWidth }}>{t("Meta description")}:</Text>
+                        <TextArea
+                            rows={2}
+                        />
+                    </Flex>
+                </Flex>
+            </Flex>
+        );
+        return [
+            {
+                key: '0',
+                label: t("Editor"),
+                children: <TabPanel value={tabValue} index={0}>{tabEditor}</TabPanel>,
+            },
+            {
+                key: '1',
+                label: t("Properties"),
+                children: <TabPanel value={tabValue} index={1}>{tabProperties}</TabPanel>,
+            },
+            {
+                key: '2',
+                label: t("Meta"),
+                children: <TabPanel value={tabValue} index={2}>{tabMeta}</TabPanel>,
+            }
+        ]
+
+    }
+
+    handleTabChange = (key: string) => {
+        this.setState({ tabValue: parseInt(key) });
+    };
+
+    render = () => {
+        console.log("Rendering PostPage with post:", this.state.post);
+        const { showMessage, messageText, messageType, post } = this.state;
+        const content = post?.content || "vacío?";
         console.log("Content:", content);
-        const { t, isDarkMode } = this.props;
         console.log("MDXEditor markdown prop:", this.state.post?.content || "");
         return (
             <Flex
@@ -196,100 +351,12 @@ export class InnerPage extends React.Component<Props, State> {
                         style={{ margin: 16 }}
                     />
                 }
-                    <Flex vertical gap="middle">
-                        {
-                            post && post.id &&
-                            <Flex gap="middle">
-                                <Text style={{ minWidth: labelWidth }}>{t("Id")}:</Text>
-                                <Input
-                                    placeholder={t("Id")}
-                                    value={post?.id}
-                                    disabled={true}
-                                />
-                            </Flex>
-                        }
-                        {
-                            post && post.title &&
-                            <Flex gap="middle">
-                                <Text style={{ minWidth: labelWidth }}>{t("Title")}:</Text>
-                                <Input
-                                    placeholder={t("Title")}
-                                    value={post?.title}
-                                    disabled={true}
-                                />
-                            </Flex>
-                        }
-                        {
-                            post && post.id &&
-                            <Flex gap="middle">
-                                <Text style={{ minWidth: labelWidth }}>{t("Slug")}:</Text>
-                                <Input
-                                    placeholder={t("Slug")}
-                                    value={post?.slug}
-                                    disabled={true}
-                                />
-                            </Flex>
-                        }
-                        <Flex gap="middle">
-                            <Text style={{ minWidth: labelWidth }}>{t("Publish at")}:</Text>
-                            <DatePicker
-                                showTime
-                                placeholder={t("Publish at")}
-                            />
-                            <Text>{t("Comments")}:</Text>
-                            <Switch checked={post?.comment_on} />
-                            <Text>{t("Private")}:</Text>
-                            <Switch checked={post?.private} />
-                        </Flex>
-                        <Flex gap="middle">
-                            <Text style={{ minWidth: labelWidth }}>{t("Meta description")}:</Text>
-                            <TextArea
-                                rows={2}
-                            />
-                        </Flex>
-
-                    </Flex>
-                    <Flex
-                    >
-                    <div className="overflow-y-auto">
-
-                        <MDXEditor
-                            key={post?.id || "new-post"}
-                            plugins={[
-                                listsPlugin(),
-                                quotePlugin(),
-                                headingsPlugin(),
-                                linkPlugin(),
-                                linkDialogPlugin(),
-                                imagePlugin(),
-                                tablePlugin(),
-                                thematicBreakPlugin(),
-                                frontmatterPlugin(),
-                                codeBlockPlugin({ defaultCodeBlockLanguage: 'txt' }),
-                                //sandpackPlugin({ sandpackConfig: virtuosoSampleSandpackConfig }),
-                                codeMirrorPlugin({ codeBlockLanguages: { js: 'JavaScript', css: 'CSS', txt: 'text', tsx: 'TypeScript' } }),
-                                directivesPlugin({ directiveDescriptors: [YoutubeDirectiveDescriptor] }),
-                                diffSourcePlugin({ diffMarkdown: originalContent, viewMode: 'rich-text' }),
-                                markdownShortcutPlugin(),
-                                toolbarPlugin({
-                                    toolbarClassName: 'my-toolbar',
-                                    toolbarContents: () => [<KitchenSinkToolbar />, <YouTubeButton />]
-                                }),
-                            ]}
-                            className={isDarkMode ? "dark-theme dark-editor" : "white-editor"}
-                            markdown={content}
-                            onChange={(value) => {
-                                this.setState((prevState) => ({
-                                    post: {
-                                        ...prevState.post!,
-                                        content: value
-                                    }
-                                }));
-                            }}
-                            overlayContainer={null}
-                        /></div>
-                    </Flex>
-                </Flex>
+                <Tabs
+                    activeKey={String(this.state.tabValue)}
+                    onChange={this.handleTabChange}
+                    items={this.getTabsItems()}
+                />
+            </Flex>
         );
     }
 }
