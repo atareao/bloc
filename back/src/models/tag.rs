@@ -87,7 +87,7 @@ impl Tag {
         }
         let unique_tags_set: HashSet<String> = string_tags.into_iter().collect();
         let unique_tags: Vec<String> = unique_tags_set.into_iter().collect();
-        let slugs: Vec<String> = unique_tags.iter().map(|t| slugify(t)).collect();
+        let slugs: Vec<String> = unique_tags.iter().map(slugify).collect();
         let sql_upsert_tags = r#"
         WITH upserted_tags AS (
             INSERT INTO tags (tag, slug)
@@ -117,6 +117,12 @@ impl Tag {
             INNER JOIN post_tags pt ON t.id = pt.tag_id
             WHERE pt.post_id = $1";
         query_as::<_, Tag>(sql).bind(post_id).fetch_one(pool).await
+    }
+
+    pub async fn delele_relations_for_post(pool: &PgPool, post_id: i32) -> Result<(), Error> {
+        let sql = "DELETE FROM post_tags WHERE post_id = $1";
+        query(sql).bind(post_id).execute(pool).await?;
+        Ok(())
     }
 
     pub async fn count_paged(pool: &PgPool, params: &ReadTagParams) -> Result<i64, Error> {

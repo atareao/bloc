@@ -190,9 +190,14 @@ pub async fn delete(
         let post_id: i32 = id.parse().unwrap_or(0);
         match Post::delete(&app_state.pool, post_id).await {
             Ok(post) => {
+                let message = if let Some(error) = Tag::delele_relations_for_post(&app_state.pool, post_id).await.err(){
+                    format!("Error deleting post-tag relations: {:?}", error)
+                }else{
+                    "Post deleted".to_string()
+                };
                 ApiResponse::new(
                     StatusCode::OK,
-                    "Post",
+                    &message,
                     Some(serde_json::to_value(post).unwrap()),
                 )
             }
