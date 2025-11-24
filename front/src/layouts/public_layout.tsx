@@ -40,7 +40,13 @@ class InnerPublicLayout extends react.Component<Props> {
                     </Button>
                     <ModeSwitcher />
                 </Header>
-                <Content style={{ padding: '24px', flex: 1 }}>
+                <Content style={{
+                    padding: '24px',
+                    flex: 1,
+                    maxWidth: 900,
+                    margin: '0 auto',
+                    width: '100%'
+                }}>
                     <Outlet />
                 </Content>
 

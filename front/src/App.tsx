@@ -27,6 +27,7 @@ const UsersPage = lazy(() => import('@/pages/admin/users_page'));
 const PostsPage = lazy(() => import('@/pages/admin/posts_page'));
 const PostPage = lazy(() => import('@/pages/admin/post_page'));
 const TagsPage = lazy(() => import('@/pages/admin/tags_page'));
+const PostPublicPage = lazy(() => import('@/pages/public/post_page'));
 
 import '@/App.css'
 
@@ -68,6 +69,7 @@ export default class App extends React.Component {
                                                 <Route path="/" element={<PublicLayout />} >
                                                     <Route index element={<HomePage />} />
                                                     <Route path="login" element={<LoginPage />} />
+                                                    <Route path=":slug" element={<PostPublicPage />} />
                                                 </Route>
                                                 <Route path="/admin" element={<AdminLayout />} >
                                                     <Route index element={<DashboardPage />} />

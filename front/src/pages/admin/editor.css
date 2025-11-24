@@ -1,6 +1,8 @@
 .dark-editor {
-    min-height: 500px;
     min-width: 1050px;
+    height: 70vh;
+    width: 100%;
+    overflow-y: auto;
     --basePageBg: black;
     background: #141414;
     border: 1px solid #424242;
@@ -8,9 +10,14 @@
 }
 .white-editor {
     min-width: 1050px;
-    min-height: 500px;
+    height: 70vh;
+    width: 100%;
+    overflow-y: auto;
     --basePageBg: white;
     background: white;
     border: 1px solid #d9d9d9;
     border-radius: 6px;
+}
+.mdxeditor-popup-container {
+    display: none !important;
 }

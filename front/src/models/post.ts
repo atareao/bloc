@@ -3,6 +3,7 @@ export default interface Post {
     title?: string;
     slug?: string;
     content: string;
+    html?: string;
     excerpt?: string;
     meta?: string;
     outline?: string;

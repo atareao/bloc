@@ -2,7 +2,7 @@ import React from "react";
 import { useNavigate } from 'react-router';
 import { useTranslation } from "react-i18next";
 import { Button, Space } from 'antd';
-import { EditFilled, DeleteFilled, PlusOutlined } from '@ant-design/icons';
+import { EditFilled, DeleteFilled, PlusOutlined, FundProjectionScreenOutlined } from '@ant-design/icons';
 import type Post from "@/models/post"; // Alias para Rule
 
 // Importamos CustomTable y los tipos necesarios
@@ -50,7 +50,11 @@ export class InnerPage extends React.Component<Props, {}> {
     // 4. Método para renderizar la columna de acciones
     private renderActionColumn = (post: Post, onEdit: (post: Post) => void, onDelete: (post: Post) => void) => {
         return (
-            <Space size="middle">
+            <Space size="small">
+                <Button onClick={() => this.props.navigate(`/${post.slug}`)} title={this.props.t('Preview')}>
+                    <FundProjectionScreenOutlined />
+                </Button>
+
                 <Button onClick={() => this.props.navigate(`/admin/posts/${post.slug}`)} title={this.props.t('Edit')}>
                     <EditFilled />
                 </Button>

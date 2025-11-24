@@ -12,7 +12,7 @@ use tracing::{debug, error};
 
 use crate::constants::{DEFAULT_LIMIT, DEFAULT_PAGE};
 use crate::models::{
-    ApiResponse, AppState, NewPost, PagedResponse, Pagination, Post, ReadPostParams, Tag
+    ApiResponse, AppState, NewPost, PagedResponse, Pagination, Post, ReadPostParams, Tag, HtmlPost
 };
 
 pub fn post_router() -> Router<Arc<AppState>> {
@@ -21,6 +21,7 @@ pub fn post_router() -> Router<Arc<AppState>> {
         .route("/", routing::patch(update))
         .route("/", routing::get(read))
         .route("/", routing::delete(delete))
+        .route("/html", routing::get(read_html))
 }
 
 pub async fn create(
@@ -73,6 +74,36 @@ pub async fn update(
             ApiResponse::new(StatusCode::BAD_REQUEST, &msg, None)
         }
     }
+}
+
+pub async fn read_html(
+    State(app_state): State<Arc<AppState>>,
+    Query(params): Query<ReadPostParams>,
+) -> impl IntoResponse {
+    debug!("Post: {:?}", params);
+    if let Some(slug) = params.slug {
+        match Post::read_by_slug(&app_state.pool, slug.as_str()).await {
+            Ok(post) => {
+                debug!("Post: {:?}", post);
+                let html_post = HtmlPost::new(&post);
+                ApiResponse::new(
+                    StatusCode::OK,
+                    "Posts",
+                    Some(serde_json::to_value(html_post).unwrap()),
+                )
+                .into_response()
+            }
+            Err(e) => {
+                let msg = format!("Error reading posts: {:?}", e);
+                error!("{}", &msg);
+                ApiResponse::new(StatusCode::BAD_REQUEST, &msg, None).into_response()
+            }
+        }
+    } else {
+        ApiResponse::new(StatusCode::BAD_REQUEST, "Error reading posts", None)
+            .into_response()
+    }
+       
 }
 
 pub async fn read(

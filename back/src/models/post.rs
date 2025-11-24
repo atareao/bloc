@@ -7,6 +7,10 @@ use sqlx::{
     postgres::{PgPool, PgRow},
     query, query_as,
 };
+use comrak::{
+    Options,
+    markdown_to_html
+};
 use tracing::debug;
 
 use crate::constants::{DEFAULT_LIMIT, DEFAULT_PAGE};
@@ -42,6 +46,24 @@ pub struct Post {
     pub updated_at: DateTime<Utc>,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone, FromRow)]
+pub struct HtmlPost {
+    pub id: i32,
+    pub title: String,
+    pub slug: String,
+    pub content: String,
+    pub html: String,
+    pub excerpt: Option<String>,
+    pub meta: Option<String>,
+    pub outline: Option<String>,
+    pub comment_on: Option<bool>,
+    pub private: Option<bool>,
+    pub audio_url: Option<String>,
+    pub published_at: Option<DateTime<Utc>>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
 #[derive(Debug, Deserialize)]
 pub struct ReadPostParams {
     pub id: Option<String>,
@@ -51,6 +73,34 @@ pub struct ReadPostParams {
     pub limit: Option<u32>,
     pub sort_by: Option<String>,
     pub asc: Option<bool>,
+}
+
+impl HtmlPost {
+    pub fn new(post: &Post) -> Self {
+        let mut options = Options::default();
+        options.extension.strikethrough = true;
+        options.extension.tagfilter = true;
+        options.extension.table = true;
+        options.extension.autolink = true;
+        options.extension.tasklist = true;
+        options.extension.superscript = true;
+        HtmlPost {
+            id: post.id,
+            title: post.title.clone(),
+            slug: post.slug.clone(),
+            content: post.content.clone(),
+            html: markdown_to_html(&post.content, &options),
+            excerpt: post.excerpt.clone(),
+            meta: post.meta.clone(),
+            outline: post.outline.clone(),
+            comment_on: post.comment_on,
+            private: post.private,
+            audio_url: post.audio_url.clone(),
+            published_at: post.published_at,
+            created_at: post.created_at,
+            updated_at: post.updated_at,
+        }
+    }
 }
 
 impl Post {
@@ -160,6 +210,11 @@ impl Post {
         Ok(())
     }
 
+    pub async fn read_html(pool: &PgPool, id: i32) -> Result<HtmlPost, Error> {
+        let sql = "SELECT * FROM posts WHERE id = $1";
+        let post = query_as::<_, Post>(sql).bind(id).fetch_one(pool).await?;
+        Ok(HtmlPost::new(&post))
+    }
     pub async fn read(pool: &PgPool, id: i32) -> Result<Post, Error> {
         let sql = "SELECT * FROM posts WHERE id = $1";
         query_as::<_, Post>(sql).bind(id).fetch_one(pool).await

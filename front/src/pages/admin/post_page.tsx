@@ -28,10 +28,11 @@ import {
 import '@mdxeditor/editor/style.css'
 import '@/pages/admin/editor.css'
 import ModeContext from "@/components/mode_context";
+import AdminHeaderContext from "@/components/admin_header_context";
 import type Post from "@/models/post";
 import { loadData, debounce, saveData, updateData } from "@/common/utils";
-import {YoutubeDirectiveDescriptor} from '@/components/descriptors/youtube_descriptor';
-import {YouTubeButton} from '@/components/embeds/youtube_embed'
+import { YoutubeDirectiveDescriptor } from '@/components/descriptors/youtube_descriptor';
+import { YouTubeButton } from '@/components/embeds/youtube_embed'
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -54,6 +55,8 @@ interface State {
 
 // La clase ya no necesita State, ya que CustomTable maneja el estado de la tabla.
 export class InnerPage extends React.Component<Props, State> {
+    static contextType = AdminHeaderContext;
+    declare context: React.ContextType<typeof AdminHeaderContext>;
 
     constructor(props: Props) {
         super(props);
@@ -84,6 +87,36 @@ export class InnerPage extends React.Component<Props, State> {
                 originalContent: response.data.content
             });
         }
+        // Add buttons to the header
+        this.context.setHeaderButtons([
+            <Tooltip title={this.props.t("Save and stay here")} key="save-stay">
+                <Button
+                    shape="circle"
+                    type="primary"
+                    icon={<SaveOutlined />}
+                    onClick={() => this.onSavePost(false)}
+                />
+            </Tooltip>,
+            <Tooltip title={this.props.t("Save and go to the posts list")} key="save-list">
+                <Button
+                    shape="circle"
+                    icon={<CheckOutlined />}
+                    onClick={() => this.onSavePost(true)}
+                />
+            </Tooltip>,
+            <Tooltip title={this.props.t("Cancel and go to the posts list")} key="cancel-list">
+                <Button
+                    shape="circle"
+                    icon={<CloseOutlined />}
+                    onClick={() => this.props.navigate("/admin/posts")}
+                />
+            </Tooltip>
+        ]);
+    }
+
+    componentWillUnmount = () => {
+        // Clear buttons from the header when component unmounts
+        this.context.setHeaderButtons([]);
     }
 
     showMessage = (text: string, type: 'success' | 'error' | 'info' | 'warning') => {
@@ -143,11 +176,16 @@ export class InnerPage extends React.Component<Props, State> {
         const { showMessage, messageText, messageType, post, originalContent } = this.state;
         const content = post?.content || "vacío?";
         const labelWidth = 120;
-        console.log("Content:",content);
+        console.log("Content:", content);
         const { t, isDarkMode } = this.props;
         console.log("MDXEditor markdown prop:", this.state.post?.content || "");
         return (
-            <Flex vertical gap="middle" style={{ maxWidth: 1050 }}>
+            <Flex
+                vertical
+                justify="center"
+                align="center"
+                gap="middle" style={{ maxWidth: 1050 }}
+            >
                 {showMessage &&
                     <Alert
                         message={messageText}
@@ -158,117 +196,100 @@ export class InnerPage extends React.Component<Props, State> {
                         style={{ margin: 16 }}
                     />
                 }
-                <Flex vertical gap="middle">
-                    {
-                        post && post.id &&
-                        <Flex>
-                            <Text style={{ minWidth: labelWidth }}>{t("Id")}:</Text>
-                            <Input
-                                placeholder={t("Id")}
-                                value={post?.id}
-                                disabled={true}
-                            />
-                        </Flex>
-                    }
-                    {
-                        post && post.title &&
+                    <Flex vertical gap="middle">
+                        {
+                            post && post.id &&
+                            <Flex gap="middle">
+                                <Text style={{ minWidth: labelWidth }}>{t("Id")}:</Text>
+                                <Input
+                                    placeholder={t("Id")}
+                                    value={post?.id}
+                                    disabled={true}
+                                />
+                            </Flex>
+                        }
+                        {
+                            post && post.title &&
+                            <Flex gap="middle">
+                                <Text style={{ minWidth: labelWidth }}>{t("Title")}:</Text>
+                                <Input
+                                    placeholder={t("Title")}
+                                    value={post?.title}
+                                    disabled={true}
+                                />
+                            </Flex>
+                        }
+                        {
+                            post && post.id &&
+                            <Flex gap="middle">
+                                <Text style={{ minWidth: labelWidth }}>{t("Slug")}:</Text>
+                                <Input
+                                    placeholder={t("Slug")}
+                                    value={post?.slug}
+                                    disabled={true}
+                                />
+                            </Flex>
+                        }
                         <Flex gap="middle">
-                            <Text style={{ minWidth: labelWidth }}>{t("Title")}:</Text>
-                            <Input
-                                placeholder={t("Title")}
-                                value={post?.title}
+                            <Text style={{ minWidth: labelWidth }}>{t("Publish at")}:</Text>
+                            <DatePicker
+                                showTime
+                                placeholder={t("Publish at")}
                             />
+                            <Text>{t("Comments")}:</Text>
+                            <Switch checked={post?.comment_on} />
+                            <Text>{t("Private")}:</Text>
+                            <Switch checked={post?.private} />
                         </Flex>
-                    }
-                    {
-                        post && post.id &&
                         <Flex gap="middle">
-                            <Text style={{ minWidth: labelWidth }}>{t("Slug")}:</Text>
-                            <Input
-                                placeholder={t("Slug")}
-                                value={post?.slug}
+                            <Text style={{ minWidth: labelWidth }}>{t("Meta description")}:</Text>
+                            <TextArea
+                                rows={2}
                             />
                         </Flex>
-                    }
-                    <Flex gap="middle">
-                        <Text style={{ minWidth: labelWidth }}>{t("Publish at")}:</Text>
-                        <DatePicker
-                            showTime
-                            placeholder={t("Publish at")}
-                        />
-                        <Text>{t("Comments")}:</Text>
-                        <Switch checked={post?.comment_on} />
-                        <Text>{t("Private")}:</Text>
-                        <Switch checked={post?.private} />
-                        <Tooltip title={t("Save and stay here")}>
-                            <Button
-                                shape="circle"
-                                type="primary"
-                                icon={<SaveOutlined />}
-                                onClick={() => this.onSavePost(false)}
-                            />
-                        </Tooltip>
-                        <Tooltip title={t("Save and go to the posts list")}>
-                            <Button
-                                shape="circle"
-                                icon={<CheckOutlined />}
-                                onClick={() => this.onSavePost(true)}
-                            />
-                        </Tooltip>
-                        <Tooltip title={t("Cancel and go to the posts list")}>
-                            <Button
-                                shape="circle"
-                                icon={<CloseOutlined />}
-                                onClick={() => this.props.navigate("/admin/posts")}
-                            />
-                        </Tooltip>
-                    </Flex>
-                    <Flex gap="middle">
-                        <Text style={{ minWidth: labelWidth }}>{t("Meta description")}:</Text>
-                        <TextArea
-                            rows={2}
-                        />
-                    </Flex>
 
-                </Flex>
-                <Flex>
-                    <MDXEditor
-                        key={post?.id || "new-post"}
-                        plugins={[
-                            listsPlugin(),
-                            quotePlugin(),
-                            headingsPlugin(),
-                            linkPlugin(),
-                            linkDialogPlugin(),
-                            imagePlugin(),
-                            tablePlugin(),
-                            thematicBreakPlugin(),
-                            frontmatterPlugin(),
-                            codeBlockPlugin({ defaultCodeBlockLanguage: 'txt' }),
-                            //sandpackPlugin({ sandpackConfig: virtuosoSampleSandpackConfig }),
-                            codeMirrorPlugin({ codeBlockLanguages: { js: 'JavaScript', css: 'CSS', txt: 'text', tsx: 'TypeScript' } }),
-                            directivesPlugin({ directiveDescriptors: [YoutubeDirectiveDescriptor] }),
-                            diffSourcePlugin({ diffMarkdown: originalContent, viewMode: 'rich-text' }),
-                            markdownShortcutPlugin(),
-                            toolbarPlugin({
-                                toolbarClassName: 'my-toolbar',
-                                toolbarContents: () => [<KitchenSinkToolbar />, <YouTubeButton />]
-                            }),
-                        ]}
-                        className={isDarkMode ? "dark-theme dark-editor" : "white-editor"}
-                        markdown={content}
-                        onChange={(value) => {
-                            this.setState((prevState) => ({
-                                post: {
-                                    ...prevState.post!,
-                                    content: value
-                                }
-                            }));
-                        }}
+                    </Flex>
+                    <Flex
+                    >
+                    <div className="overflow-y-auto">
 
-                    />
+                        <MDXEditor
+                            key={post?.id || "new-post"}
+                            plugins={[
+                                listsPlugin(),
+                                quotePlugin(),
+                                headingsPlugin(),
+                                linkPlugin(),
+                                linkDialogPlugin(),
+                                imagePlugin(),
+                                tablePlugin(),
+                                thematicBreakPlugin(),
+                                frontmatterPlugin(),
+                                codeBlockPlugin({ defaultCodeBlockLanguage: 'txt' }),
+                                //sandpackPlugin({ sandpackConfig: virtuosoSampleSandpackConfig }),
+                                codeMirrorPlugin({ codeBlockLanguages: { js: 'JavaScript', css: 'CSS', txt: 'text', tsx: 'TypeScript' } }),
+                                directivesPlugin({ directiveDescriptors: [YoutubeDirectiveDescriptor] }),
+                                diffSourcePlugin({ diffMarkdown: originalContent, viewMode: 'rich-text' }),
+                                markdownShortcutPlugin(),
+                                toolbarPlugin({
+                                    toolbarClassName: 'my-toolbar',
+                                    toolbarContents: () => [<KitchenSinkToolbar />, <YouTubeButton />]
+                                }),
+                            ]}
+                            className={isDarkMode ? "dark-theme dark-editor" : "white-editor"}
+                            markdown={content}
+                            onChange={(value) => {
+                                this.setState((prevState) => ({
+                                    post: {
+                                        ...prevState.post!,
+                                        content: value
+                                    }
+                                }));
+                            }}
+                            overlayContainer={null}
+                        /></div>
+                    </Flex>
                 </Flex>
-            </Flex>
         );
     }
 }

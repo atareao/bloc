@@ -12,7 +12,7 @@ pub use response::{
     PagedResponse,
 };
 pub use user::{User, TokenClaims, UserSchema, UserRegister};
-pub use post::{NewPost, Post, ReadPostParams};
+pub use post::{NewPost, Post, ReadPostParams, HtmlPost};
 pub use tag::{NewTag, Tag, ReadTagParams};
 pub use comment::{NewComment, Comment, ReadCommentParams};
 pub type Error = Box<dyn std::error::Error>;
