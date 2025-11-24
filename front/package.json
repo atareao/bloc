@@ -11,10 +11,9 @@
   },
   "dependencies": {
     "@ant-design/icons": "^6.1.0",
-    "@ant-design/v5-patch-for-react-19": "^1.0.3",
-    "@mdxeditor/editor": "^3.49.2",
+    "@mdxeditor/editor": "^3.50.0",
     "@uiw/react-md-editor": "^4.0.8",
-    "antd": "^5.29.1",
+    "antd": "^6.0.0",
     "class-variance-authority": "^0.7.1",
     "dayjs": "^1.11.19",
     "html-react-parser": "^5.2.10",
