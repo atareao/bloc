@@ -3,6 +3,7 @@ mod health;
 mod post;
 mod comment;
 mod tag;
+mod upload;
 
 pub use health::health_router;
 pub use user::{
@@ -12,3 +13,4 @@ pub use user::{
 pub use post::post_router;
 pub use comment::comment_router;
 pub use tag::tag_router;
+pub use upload::upload_router;

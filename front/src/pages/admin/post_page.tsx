@@ -4,39 +4,17 @@ import { useTranslation } from "react-i18next";
 import { Button, Tooltip, Flex, Typography, Input, DatePicker, Switch, Alert, Tabs } from 'antd';
 import type { TabsProps } from 'antd';
 import dayjs from 'dayjs';
-import { MDXEditor } from '@mdxeditor/editor'
 import CheckOutlined from '@ant-design/icons/CheckOutlined';
 import CloseOutlined from '@ant-design/icons/CloseOutlined';
 import SaveOutlined from '@ant-design/icons/SaveOutlined';
-import {
-    headingsPlugin,
-    listsPlugin,
-    quotePlugin,
-    thematicBreakPlugin,
-    toolbarPlugin,
-    linkPlugin,
-    frontmatterPlugin,
-    imagePlugin,
-    linkDialogPlugin,
-    tablePlugin,
-    markdownShortcutPlugin,
-    diffSourcePlugin,
-    codeBlockPlugin,
-    codeMirrorPlugin,
-    directivesPlugin,
-    KitchenSinkToolbar,
-} from '@mdxeditor/editor'
-
-import '@mdxeditor/editor/style.css'
-import '@/pages/admin/editor.css'
 import ModeContext from "@/components/mode_context";
 import AdminHeaderContext from "@/components/admin_header_context";
 import AuthContext from '@/components/auth_context';
 import type Post from "@/models/post";
 import { loadData, debounce, saveData, updateData } from "@/common/utils";
 import TabPanel from "@/components/tab_panel";
-import { YoutubeDirectiveDescriptor } from '@/components/descriptors/youtube_descriptor';
-import { YouTubeButton } from '@/components/embeds/youtube_embed'
+import CustomEditor from "@/components/custom_editor"
+import { BASE_URL } from '@/constants';
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -180,37 +158,16 @@ export class InnerPage extends React.Component<Props, State> {
     }
 
 
-    getTabsItems = (): TabsProps['items'] => {
-        const { t, isDarkMode } = this.props;
-        const { tabValue, post, originalContent } = this.state;
+    private getTabsItems = (): TabsProps['items'] => {
+        const { t } = this.props;
+        const { tabValue, post } = this.state;
+        console.log("getTabsItems: ", post);
         const content = post?.content || "# Title";
+        console.log("Content:", content);
         const labelWidth = 120;
         const tabEditor = (
-            <MDXEditor
-                key={post?.id || "new-post"}
-                plugins={[
-                    listsPlugin(),
-                    quotePlugin(),
-                    headingsPlugin(),
-                    linkPlugin(),
-                    linkDialogPlugin(),
-                    imagePlugin(),
-                    tablePlugin(),
-                    thematicBreakPlugin(),
-                    frontmatterPlugin(),
-                    codeBlockPlugin({ defaultCodeBlockLanguage: 'txt' }),
-                    //sandpackPlugin({ sandpackConfig: virtuosoSampleSandpackConfig }),
-                    codeMirrorPlugin({ codeBlockLanguages: { js: 'JavaScript', css: 'CSS', txt: 'text', tsx: 'TypeScript' } }),
-                    directivesPlugin({ directiveDescriptors: [YoutubeDirectiveDescriptor] }),
-                    diffSourcePlugin({ diffMarkdown: originalContent, viewMode: 'rich-text' }),
-                    markdownShortcutPlugin(),
-                    toolbarPlugin({
-                        toolbarClassName: 'my-toolbar',
-                        toolbarContents: () => [<KitchenSinkToolbar />, <YouTubeButton />]
-                    }),
-                ]}
-                className={isDarkMode ? "dark-theme dark-editor" : "white-editor"}
-                markdown={content}
+            <CustomEditor
+                content={content}
                 onChange={(value) => {
                     this.setState((prevState) => ({
                         post: {
@@ -219,7 +176,6 @@ export class InnerPage extends React.Component<Props, State> {
                         }
                     }));
                 }}
-                overlayContainer={null}
             />
 
         );
@@ -254,7 +210,7 @@ export class InnerPage extends React.Component<Props, State> {
                         <Text style={{ minWidth: labelWidth }}>{t("Publish at")}:</Text>
                         <DatePicker
                             showTime
-                            value={post?.published_at ? dayjs(post.published_at): undefined}
+                            value={post?.published_at ? dayjs(post.published_at) : undefined}
                             placeholder={t("Publish at")}
                             onChange={(published_at) => {
                                 this.setState((prevState) => ({
@@ -383,7 +339,7 @@ export default function Page() {
                         );
                     }}
                 </ModeContext.Consumer>
-                }}
+            }}
         </AuthContext.Consumer>
     );
 }

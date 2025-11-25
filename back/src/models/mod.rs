@@ -4,6 +4,7 @@ mod post;
 mod tag;
 mod comment;
 
+use std::path::PathBuf;
 pub use response::{
     ApiResponse,
     CustomResponse,
@@ -23,4 +24,5 @@ use sqlx::postgres::PgPool;
 pub struct AppState {
     pub pool: PgPool,
     pub secret: String,
+    pub upload_dir: PathBuf,
 }

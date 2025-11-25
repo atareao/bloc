@@ -5,6 +5,7 @@ import type { SorterResult } from 'antd/es/table/interface';
 import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
 const { Text } = Typography;
 type TablePaginationConfig = Exclude<GetProp<TableProps, 'pagination'>, boolean>;
+import dayjs from 'dayjs';
 
 import { loadData, mapsEqual, debounce } from '@/common/utils';
 import type { DialogMode, FieldDefinition } from '@/common/types';
@@ -158,6 +159,8 @@ export default class CustomTable<T extends { id: number | string }> extends Reac
             const defaultRender = (content: any) => {
                 if (field.type === 'boolean') {
                     return content ? <CheckOutlined style={{ color: 'green' }} /> : <CloseOutlined style={{ color: 'red' }} />;
+                }else if (field.type === 'date') {
+                    return <Text>{content ? dayjs(content).format('DD/MM/YY HH:mm:ss') : ''}</Text>;
                 }
                 return <Text>{content}</Text>
             };

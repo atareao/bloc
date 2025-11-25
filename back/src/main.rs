@@ -48,6 +48,7 @@ use http::{
     post_router,
     tag_router,
     comment_router,
+    upload_router,
 };
 use dotenv::dotenv;
 use models::{
@@ -104,9 +105,11 @@ async fn main() -> Result<(), Error> {
         .nest("/posts", post_router())
         .nest("/tags", tag_router())
         .nest("/comments", comment_router())
+        .nest("/uploads", upload_router())
         .with_state(Arc::new(AppState {
             pool,
             secret,
+            upload_dir: "static/images".into(),
     }));
 
     let cors = CorsLayer::new()
