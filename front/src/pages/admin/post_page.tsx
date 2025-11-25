@@ -31,6 +31,7 @@ import '@mdxeditor/editor/style.css'
 import '@/pages/admin/editor.css'
 import ModeContext from "@/components/mode_context";
 import AdminHeaderContext from "@/components/admin_header_context";
+import AuthContext from '@/components/auth_context';
 import type Post from "@/models/post";
 import { loadData, debounce, saveData, updateData } from "@/common/utils";
 import TabPanel from "@/components/tab_panel";
@@ -45,6 +46,7 @@ interface Props {
     t: (key: string) => string; // Propiedad de useTranslation
     isDarkMode: boolean;
     postSlug?: string;
+    isLoggedIn?: boolean;
 }
 
 interface State {
@@ -68,7 +70,7 @@ export class InnerPage extends React.Component<Props, State> {
             post: {
                 published_at: new Date(),
                 comment_on: true,
-                private: true,
+                private: false,
                 content: "",
                 excerpt: "",
                 meta: "",
@@ -181,7 +183,7 @@ export class InnerPage extends React.Component<Props, State> {
     getTabsItems = (): TabsProps['items'] => {
         const { t, isDarkMode } = this.props;
         const { tabValue, post, originalContent } = this.state;
-        const content = post?.content || "vacío?";
+        const content = post?.content || "# Title";
         const labelWidth = 120;
         const tabEditor = (
             <MDXEditor
@@ -365,16 +367,23 @@ export default function Page() {
     const navigate = useNavigate();
     const { t } = useTranslation();
     const postSlug = useLocation().pathname.split('/')[3];
-    return <ModeContext.Consumer>
-        {({ isDarkMode }) => {
-            return (
-                <InnerPage
-                    navigate={navigate}
-                    t={t}
-                    isDarkMode={isDarkMode}
-                    postSlug={postSlug === "[new-post]" ? undefined : postSlug}
-                />
-            );
-        }}
-    </ModeContext.Consumer>
+    return (
+        <AuthContext.Consumer>
+            {({ isLoggedIn }) => {
+                return <ModeContext.Consumer>
+                    {({ isDarkMode }) => {
+                        return (
+                            <InnerPage
+                                navigate={navigate}
+                                t={t}
+                                isDarkMode={isDarkMode}
+                                isLoggedIn={isLoggedIn}
+                                postSlug={postSlug === "[new-post]" ? undefined : postSlug}
+                            />
+                        );
+                    }}
+                </ModeContext.Consumer>
+                }}
+        </AuthContext.Consumer>
+    );
 }

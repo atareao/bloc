@@ -3,9 +3,12 @@ export default interface Post {
     title?: string;
     slug?: string;
     content: string;
-    html?: string;
+    html_content?: string;
     excerpt?: string;
+    html_excerpt?: string;
     meta?: string;
+    clean_meta?: string;
+    html_meta?: string;
     outline?: string;
     comment_on?: boolean;
     private?: boolean;

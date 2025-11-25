@@ -55,14 +55,3 @@ export const DialogModes = {
     DELETE: "delete" as DialogMode,
     NONE:   "none"   as DialogMode,
 };
-
-export interface PuntoPreemerMarker {
-    type: string;
-    latitude: number;
-    longitude: number;
-    icon?: any;
-    name: string;
-    description: string;
-    address?: string;
-}
-

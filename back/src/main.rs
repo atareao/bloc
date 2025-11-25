@@ -1,6 +1,7 @@
 mod http;
 mod models;
 mod constants;
+mod utils;
 
 use axum::{
     Router,

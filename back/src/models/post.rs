@@ -1,4 +1,5 @@
 use chrono::{DateTime, Utc};
+use md_to_text::convert;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use slug::slugify;
@@ -7,13 +8,19 @@ use sqlx::{
     postgres::{PgPool, PgRow},
     query, query_as,
 };
-use comrak::{
-    Options,
-    markdown_to_html
-};
+use once_cell::sync::Lazy;
 use tracing::debug;
 
 use crate::constants::{DEFAULT_LIMIT, DEFAULT_PAGE};
+use crate::utils::markdown_to_html;
+
+static MAIN_TITLE_REGEX: Lazy<Regex> = Lazy::new(||
+    Regex::new(r##"^#\s+(.*)$"##).unwrap()
+);
+static MAIN_IMAGE_REGEX: Lazy<Regex> = Lazy::new(||
+    Regex::new(r##"!\[(.*?)\]\((.*?)(?: "(.*?)")?\)"##).unwrap()
+);
+
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct NewPost {
@@ -46,15 +53,26 @@ pub struct Post {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, FromRow)]
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Image {
+    pub url: String,
+    pub title: Option<String>,
+    pub alt: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct HtmlPost {
     pub id: i32,
     pub title: String,
     pub slug: String,
     pub content: String,
-    pub html: String,
+    pub html_content: String,
     pub excerpt: Option<String>,
+    pub html_excerpt: Option<String>,
     pub meta: Option<String>,
+    pub clean_meta: Option<String>,
+    pub html_meta: Option<String>,
+    pub image: Option<Image>,
     pub outline: Option<String>,
     pub comment_on: Option<bool>,
     pub private: Option<bool>,
@@ -77,21 +95,18 @@ pub struct ReadPostParams {
 
 impl HtmlPost {
     pub fn new(post: &Post) -> Self {
-        let mut options = Options::default();
-        options.extension.strikethrough = true;
-        options.extension.tagfilter = true;
-        options.extension.table = true;
-        options.extension.autolink = true;
-        options.extension.tasklist = true;
-        options.extension.superscript = true;
         HtmlPost {
             id: post.id,
             title: post.title.clone(),
             slug: post.slug.clone(),
             content: post.content.clone(),
-            html: markdown_to_html(&post.content, &options),
+            html_content: markdown_to_html(&post.content),
             excerpt: post.excerpt.clone(),
+            html_excerpt: post.excerpt.as_ref().map(|e| markdown_to_html(e)),
             meta: post.meta.clone(),
+            clean_meta: post.meta.as_ref().map(|m| convert(m)),
+            html_meta: post.meta.as_ref().map(|m| markdown_to_html(m)),
+            image: get_first_image(&post.content),
             outline: post.outline.clone(),
             comment_on: post.comment_on,
             private: post.private,
@@ -186,11 +201,7 @@ impl Post {
             .await
     }
 
-    pub async fn assign_tags(
-        pool: &PgPool,
-        post_id: i32,
-        tag_ids: Vec<i32>,
-    ) -> Result<(), Error> {
+    pub async fn assign_tags(pool: &PgPool, post_id: i32, tag_ids: Vec<i32>) -> Result<(), Error> {
         if tag_ids.is_empty() {
             return Ok(());
         }
@@ -289,11 +300,22 @@ impl Post {
 }
 
 fn get_title(content: &str) -> Option<String> {
-    let re = Regex::new(r"^#\s+(.*)$").unwrap();
     let first_line = content.lines().next()?;
-    if let Some(captures) = re.captures(first_line) {
-        let title = captures.get(1)?.as_str().trim();
-        return Some(title.to_string());
-    }
-    None
+    MAIN_TITLE_REGEX.captures(first_line).and_then(|caps| {
+        let title = caps.get(1)?.as_str().trim();
+        Some(title.to_string())
+    })
+}
+
+fn get_first_image(content: &str) -> Option<Image> {
+    MAIN_IMAGE_REGEX.captures(content).map(|caps| {
+        let url = caps.get(2).unwrap().as_str().to_string();
+        let alt_text = caps.get(1).map(|m| m.as_str().to_string());
+        let title = caps.get(3).map(|m| m.as_str().to_string());
+        Image {
+            url,
+            title,
+            alt: alt_text,
+        }
+    })
 }

@@ -81,11 +81,30 @@ pub async fn read_html(
     Query(params): Query<ReadPostParams>,
 ) -> impl IntoResponse {
     debug!("Post: {:?}", params);
-    if let Some(slug) = params.slug {
+    if let Some(id) = params.id {
+        let post_id: i32 = id.parse().unwrap_or(0);
+        match Post::read(&app_state.pool, post_id).await {
+            Ok(post) => {
+                let html_post = HtmlPost::new(&post);
+                debug!("Post: {:?}", html_post);
+                ApiResponse::new(
+                    StatusCode::OK,
+                    "Post",
+                    Some(serde_json::to_value(html_post).unwrap()),
+                )
+                .into_response()
+            }
+            Err(e) => {
+                let msg = format!("Error reading posts: {:?}", e);
+                error!("{}", &msg);
+                ApiResponse::new(StatusCode::BAD_REQUEST, &msg, None).into_response()
+            }
+        }
+    }else if let Some(slug) = params.slug {
         match Post::read_by_slug(&app_state.pool, slug.as_str()).await {
             Ok(post) => {
-                debug!("Post: {:?}", post);
                 let html_post = HtmlPost::new(&post);
+                debug!("Post: {:?}", html_post);
                 ApiResponse::new(
                     StatusCode::OK,
                     "Posts",
@@ -99,11 +118,41 @@ pub async fn read_html(
                 ApiResponse::new(StatusCode::BAD_REQUEST, &msg, None).into_response()
             }
         }
+    } else if let Ok(posts) = Post::read_paged(&app_state.pool, &params).await
+        && let Ok(count) = Post::count_paged(&app_state.pool, &params).await
+    {
+        debug!("Posts: {:?}", posts);
+        let limit = params.limit.unwrap_or(DEFAULT_LIMIT);
+        let offset = params.page.unwrap_or(DEFAULT_PAGE) - 1;
+        let total_pages = (count as f32 / limit as f32).ceil() as u32;
+        let pagination = Pagination {
+            page: offset + 1,
+            limit,
+            pages: total_pages,
+            records: count,
+            prev: if offset > 0 {
+                Some(format!("/records?page={}&limit={}", offset, limit))
+            } else {
+                None
+            },
+            next: if (offset + 1) < total_pages {
+                Some(format!("/records?page={}&limit={}", offset + 2, limit))
+            } else {
+                None
+            },
+        };
+        let html_posts: Vec<HtmlPost> = posts.iter().map(HtmlPost::new).collect();
+        PagedResponse::new(
+            StatusCode::OK,
+            "results",
+            Some(serde_json::to_value(html_posts).unwrap()),
+            pagination,
+        )
+        .into_response()
     } else {
         ApiResponse::new(StatusCode::BAD_REQUEST, "Error reading posts", None)
             .into_response()
     }
-       
 }
 
 pub async fn read(

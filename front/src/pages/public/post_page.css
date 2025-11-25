@@ -1,29 +1,23 @@
 @import url('https://fonts.googleapis.com/css?family=Lato:400,700|Lora|Playfair+Display:700i,900');
 
-html,
-body {
-  margin: 0;
-  width: 100%;
-}
-
-h1,
-h2,
-p,
-i,
-a,
-.first-letter,
-.authorName a {
+.post h1,
+.post h2,
+.post p,
+.post i,
+.post a,
+.post .first-letter,
+.post .authorName a {
   text-rendering: optimizeLegibility;
 }
 
-h1 {
+.post h1 {
   font-family: "Playfair Display", serif;
   font-size: 48px;
   text-align: left;
   margin-bottom: 8px;
 }
 
-h2 {
+.post h2 {
   font-family: "Lato", sans-serif;
   font-size: 26px;
   font-weight: 700;
@@ -34,7 +28,7 @@ h2 {
   letter-spacing: -0.45px;
 }
 
-p, i, a {
+.post p, .post i, .post a {
   margin-top: 21px;
   font-family: "Lora";
   font-size: 21px;
@@ -42,11 +36,11 @@ p, i, a {
   line-height: 1.58;
 }
 
-a {
+.post a {
   text-decoration: underline;
 }
 
-blockquote {
+.post blockquote {
   font-family: "Playfair Display", serif;
   font-size: 30px;
   font-style: italic;
@@ -59,18 +53,18 @@ blockquote {
   padding: 0 0 0 50px;
 }
 
-code {
+.post code {
   font-size: 18px;
   background: rgba(0,0,0,.05);
   border-radius: 2px;
   padding: 3px 5px;
 }
 
-mark, .highlighted {
+.post mark, .post .highlighted {
   background: #7DFFB3;
 }
 
-.first-letter {
+.post .first-letter {
   overflow-wrap: break-word;
   font-family: "Playfair Display", serif;
   font-size: 60px;
@@ -81,10 +75,10 @@ mark, .highlighted {
   margin: 0px 7px 0 -5px;
 }
 
-.subtitle {
+.post .subtitle {
   font-family: "Lato", sans-serif;
   color: rgba(0, 0, 0, 0.54);
   margin: 0 0 24px 0;
 }
 
-::selection{background-color: lavender}
+.post::selection{background-color: lavender}

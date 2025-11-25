@@ -9,14 +9,12 @@ import { initReactI18next } from "react-i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 import Backend from "i18next-http-backend";
 import { ConfigProvider, theme } from "antd";
-import '@ant-design/v5-patch-for-react-19';
 
 import { AuthContextProvider } from "@/components/auth_context";
 import ModeContext, { ModeContextProvider } from "@/components/mode_context";
 
 const PublicLayout = lazy(() => import('@/layouts/public_layout'));
 const AdminLayout = lazy(() => import('@/layouts/admin_layout'));
-const HomePage = lazy(() => import('@/pages/public/home_page'));
 const LoginPage = lazy(() => import('@/pages/public/login_page'));
 const LogoutPage = lazy(() => import('@/pages/admin/logout_page'));
 const DashboardPage = lazy(() => import('@/pages/admin/dashboard_page'));
@@ -27,7 +25,8 @@ const UsersPage = lazy(() => import('@/pages/admin/users_page'));
 const PostsPage = lazy(() => import('@/pages/admin/posts_page'));
 const PostPage = lazy(() => import('@/pages/admin/post_page'));
 const TagsPage = lazy(() => import('@/pages/admin/tags_page'));
-const PostPublicPage = lazy(() => import('@/pages/public/post_page'));
+const PublicPostPage = lazy(() => import('@/pages/public/post_page'));
+const PublicPostsPage = lazy(() => import('@/pages/public/posts_page'));
 
 import '@/App.css'
 
@@ -67,9 +66,9 @@ export default class App extends React.Component {
                                         <Suspense fallback={<div>Loading...</div>}>
                                             <Routes>
                                                 <Route path="/" element={<PublicLayout />} >
-                                                    <Route index element={<HomePage />} />
+                                                    <Route index element={<PublicPostsPage />} />
                                                     <Route path="login" element={<LoginPage />} />
-                                                    <Route path=":slug" element={<PostPublicPage />} />
+                                                    <Route path=":slug" element={<PublicPostPage />} />
                                                 </Route>
                                                 <Route path="/admin" element={<AdminLayout />} >
                                                     <Route index element={<DashboardPage />} />
