@@ -14,7 +14,6 @@ import type Post from "@/models/post";
 import { loadData, debounce, saveData, updateData } from "@/common/utils";
 import TabPanel from "@/components/tab_panel";
 import CustomEditor from "@/components/custom_editor"
-import { BASE_URL } from '@/constants';
 
 const { Text } = Typography;
 const { TextArea } = Input;
