@@ -66,6 +66,7 @@ async fn main() -> Result<(), Error> {
         .init();
     info!("Log level: {log_level}");
 
+    let base_url = var("BASE_URL").unwrap_or("http://localhost:3000".to_string());
     let db_url = var("DATABASE_URL").expect("DB_URL environment mandatory");
     info!("DB url: {}", db_url);
     let port = var("PORT").unwrap_or("3000".to_string());
@@ -110,6 +111,7 @@ async fn main() -> Result<(), Error> {
             pool,
             secret,
             upload_dir: "static/images".into(),
+            base_url,
     }));
 
     let cors = CorsLayer::new()

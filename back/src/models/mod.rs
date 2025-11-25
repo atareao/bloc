@@ -25,4 +25,5 @@ pub struct AppState {
     pub pool: PgPool,
     pub secret: String,
     pub upload_dir: PathBuf,
+    pub base_url: String,
 }

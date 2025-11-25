@@ -84,7 +84,9 @@ async fn upload_image(
                     .into_response();
             }
         }
-        let relative_path = format!("/images/{}/{}", date_path, final_filename);
+        let relative_path = format!("{}/images/{}/{}",
+            state.base_url,
+            date_path, final_filename);
         return ApiResponse::new(
             StatusCode::OK,
             "File uploaded successfully",
