@@ -18,8 +18,6 @@ const AdminLayout = lazy(() => import('@/layouts/admin_layout'));
 const LoginPage = lazy(() => import('@/pages/public/login_page'));
 const LogoutPage = lazy(() => import('@/pages/admin/logout_page'));
 const DashboardPage = lazy(() => import('@/pages/admin/dashboard_page'));
-const RulesPage = lazy(() => import('@/pages/admin/rules_page'));
-const ChartsPage = lazy(() => import('@/pages/admin/charts_page'));
 const UsersPage = lazy(() => import('@/pages/admin/users_page'));
 const PostsPage = lazy(() => import('@/pages/admin/posts_page'));
 const PostPage = lazy(() => import('@/pages/admin/post_page'));
@@ -73,8 +71,6 @@ export default class App extends React.Component {
                                                     <Route index element={<DashboardPage />} />
                                                     <Route path="logout" element={<LogoutPage />} />
                                                     <Route path="dashboard" element={<DashboardPage />} />
-                                                    <Route path="rules" element={<RulesPage />} />
-                                                    <Route path="charts" element={<ChartsPage />} />
                                                     <Route path="users" element={<UsersPage />} />
                                                     <Route path="tags" element={<TagsPage />} />
                                                     <Route path="posts" >

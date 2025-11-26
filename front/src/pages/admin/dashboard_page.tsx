@@ -5,8 +5,9 @@ import { Flex, Typography, Avatar, Card } from 'antd';
 
 import { loadData } from "@/common/utils";
 import Logo from "@/assets/logo.svg";
+import { VERSION } from "@/constants";
 
-const TITLE = "Bloc ()"
+const TITLE = `Bloc (${VERSION})`
 
 interface Props {
     navigate: any
@@ -65,28 +66,21 @@ export class InnerPage extends react.Component<Props, State> {
                                     style={{ margin: 5, cursor: "pointer" }}
                                     onClick={() => this.props.navigate("/admin/rules")}
                                 >
-                                    {`${this.props.t("Total of rules")}: ${this.state.total_rules}`}
+                                    {`${this.props.t("Total of posts")}: ${this.state.total_rules}`}
                                 </Typography.Title>
                                 <Typography.Title
                                     level={4}
                                     style={{ margin: 5, cursor: "pointer" }}
                                     onClick={() => this.props.navigate("/admin/rules")}
                                 >
-                                    {`${this.props.t("Total of active rules")}: ${this.state.total_active_rules}`}
+                                    {`${this.props.t("Total of active tags")}: ${this.state.total_active_rules}`}
                                 </Typography.Title>
                                 <Typography.Title
                                     level={4}
                                     style={{ margin: 5, cursor: "pointer" }}
                                     onClick={() => this.props.navigate("/admin/records")}
                                 >
-                                    {`${this.props.t("Total of requests")}: ${this.state.total_requests}`}
-                                </Typography.Title>
-                                <Typography.Title
-                                    level={4}
-                                    style={{ margin: 5, cursor: "pointer" }}
-                                    onClick={() => this.props.navigate("/admin/records")}
-                                >
-                                    {`${this.props.t("Total of filtered requests")}: ${this.state.total_filtered_requests}`}
+                                    {`${this.props.t("Total of comments")}: ${this.state.total_requests}`}
                                 </Typography.Title>
                             </>
                         }

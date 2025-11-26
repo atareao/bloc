@@ -11,8 +11,10 @@ import {
 import ModeSwitcher from '@/components/mode_switcher';
 import AuthContext from '@/components/auth_context';
 import AdminHeaderContext from '@/components/admin_header_context';
+import { VERSION } from '@/constants';
 
 const ROLE = "admin";
+const TITLE = `Bloc (${VERSION})`
 const { Header, Content, Footer, Sider } = Layout;
 
 type MenuItem = Required<MenuProps>['items'][number];
@@ -132,7 +134,7 @@ class InnerAdminLayout extends react.Component<Props, State> {
                             </div>
                         </Content>
                         <Footer style={{ textAlign: 'center' }}>
-                            ©{new Date().getFullYear()} Bloc
+                            ©{new Date().getFullYear()} { TITLE }
                         </Footer>
                     </Layout>
                 </Layout>
