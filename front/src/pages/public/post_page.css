@@ -14,8 +14,6 @@
 .post-container {
   display: flex;
   justify-content: center;
-  /* Margen superior e inferior generoso */
-  padding: 40px 20px; 
 }
 
 .post {
