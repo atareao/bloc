@@ -17,6 +17,9 @@
     line-height: 1.8;
     margin: 10px 0;
 }
+.milkdown .ProseMirror li p{
+    margin: 0;
+}
 .image-wrapper {
     padding: 24px 0;
 }
