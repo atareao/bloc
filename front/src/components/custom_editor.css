@@ -6,6 +6,12 @@
     height: 700px;
     max-height: 700px;
 }
+
+.milkdown .ProseMirror {
+    padding: 6px 24px;
+    background-color: var(--crepe-color-surface);
+    min-height: 700px;
+}
 .milkdown .ProseMirror p {
     font-size: 1.1rem;
     line-height: 1.8;

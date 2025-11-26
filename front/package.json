@@ -29,6 +29,8 @@
     "i18next-browser-languagedetector": "^8.2.0",
     "i18next-http-backend": "^3.0.2",
     "jwt-decode": "^4.0.0",
+    "link-tooltip": "link:@milkdown/components/link-tooltip",
+    "link-tooltop": "link:@milkdown/components/link-tooltop",
     "lodash.throttle": "^4.1.1",
     "mdast-util-directive": "^3.1.0",
     "react": "^19.2.0",
