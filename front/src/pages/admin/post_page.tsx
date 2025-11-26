@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useContext, useState, useEffect } from "react";
 import { useNavigate, useLocation } from 'react-router'; // 1. Añadido useParams
 import { useTranslation } from "react-i18next";
 import { Button, Tooltip, Flex, Typography, Input, DatePicker, Switch, Alert, Tabs } from 'antd';
@@ -19,6 +19,7 @@ const { Text } = Typography;
 const { TextArea } = Input;
 
 interface Props {
+    post?: Post;
     navigate: any; // Propiedad de useNavigate (aunque no se usa aquí)
     t: (key: string) => string; // Propiedad de useTranslation
     isDarkMode: boolean;
@@ -27,7 +28,7 @@ interface Props {
 }
 
 interface State {
-    post?: Post;
+    currentPost?: Post;
     originalContent?: string;
     showMessage: boolean;
     messageText?: string;
@@ -44,7 +45,7 @@ export class InnerPage extends React.Component<Props, State> {
     constructor(props: Props) {
         super(props);
         this.state = {
-            post: {
+            currentPost: props.post?props.post:{
                 published_at: new Date(),
                 comment_on: true,
                 private: false,
@@ -52,25 +53,13 @@ export class InnerPage extends React.Component<Props, State> {
                 excerpt: "",
                 meta: "",
             } as Post,
-            originalContent: "",
+            originalContent: props.post?.content || "",
             showMessage: false,
             tabValue: 0,
         }
     }
 
     componentDidMount = async () => {
-        console.log("PostPage mounted with slug:", this.props.postSlug);
-        const response = await loadData<Post>("posts", new Map([["slug", this.props.postSlug || ""]]));
-        if (response.status === 200 && response.data) {
-            console.log("Post loaded:", response.data);
-            this.setState({
-                post: {
-                    ...this.state.post,
-                    ...response.data
-                },
-                originalContent: response.data.content
-            });
-        }
         // Add buttons to the header
         this.context.setHeaderButtons([
             <Tooltip title={this.props.t("Save and stay here")} key="save-stay">
@@ -117,28 +106,28 @@ export class InnerPage extends React.Component<Props, State> {
     }, 3000);
 
     onSavePost = async (goToList: boolean) => {
-        if (!this.state.post || !this.state.post.content || this.state.post.content === "") {
+        if (!this.state.currentPost || !this.state.currentPost.content || this.state.currentPost.content === "") {
             this.showMessage(this.props.t("Content can not be empty"), "error");
             return;
         }
-        if (!this.state.post.content.startsWith("# ")) {
+        if (!this.state.currentPost.content.startsWith("# ")) {
             this.showMessage(this.props.t("Content must starts with title '# '"), "error");
             return;
         }
         let response;
-        if (this.state.post.id) {
+        if (this.state.currentPost.id) {
             // update existing post
-            response = await updateData<Post>(`posts`, this.state.post);
+            response = await updateData<Post>(`posts`, this.state.currentPost);
         } else {
             // create new post
-            response = await saveData<Post>("posts", this.state.post);
+            response = await saveData<Post>("posts", this.state.currentPost);
         }
 
         if (response.status === 200 && response.data) {
             this.showMessage(this.props.t("Post saved successfully"), "success");
             this.setState({
-                post: {
-                    ...this.state.post,
+                currentPost: {
+                    ...this.state.currentPost,
                     ...response.data
                 }
             });
@@ -158,20 +147,21 @@ export class InnerPage extends React.Component<Props, State> {
 
 
     private getTabsItems = (): TabsProps['items'] => {
-        const { t } = this.props;
-        const { tabValue, post } = this.state;
-        console.log("getTabsItems: ", post);
-        const content = post?.content || "# Title";
-        console.log("Content:", content);
+        console.log("======================");
+        console.log("Original content:", this.props.post?.content);
+        console.log("======================");
+        const { t, post } = this.props;
+        const { tabValue, currentPost } = this.state;
+        console.log("getTabsItems: ", currentPost);
         const labelWidth = 120;
         const tabEditor = (
             <CustomEditor
-                content={content}
+                content={ post?.content || ""}
                 isDarkMode={this.props.isDarkMode}
                 onChange={(value: string) => {
                     this.setState((prevState) => ({
-                        post: {
-                            ...prevState.post!,
+                        currentPost: {
+                            ...prevState.currentPost!,
                             content: value
                         }
                     }));
@@ -186,7 +176,7 @@ export class InnerPage extends React.Component<Props, State> {
                         <Text style={{ minWidth: labelWidth }}>{t("Id")}:</Text>
                         <Input
                             placeholder={t("Id")}
-                            value={post?.id}
+                            value={currentPost?.id}
                             disabled={true}
                         />
                     </Flex>
@@ -194,7 +184,7 @@ export class InnerPage extends React.Component<Props, State> {
                         <Text style={{ minWidth: labelWidth }}>{t("Title")}:</Text>
                         <Input
                             placeholder={t("Title")}
-                            value={post?.title}
+                            value={currentPost?.title}
                             disabled={true}
                         />
                     </Flex>
@@ -202,7 +192,7 @@ export class InnerPage extends React.Component<Props, State> {
                         <Text style={{ minWidth: labelWidth }}>{t("Slug")}:</Text>
                         <Input
                             placeholder={t("Slug")}
-                            value={post?.slug}
+                            value={currentPost?.slug}
                             disabled={true}
                         />
                     </Flex>
@@ -210,7 +200,7 @@ export class InnerPage extends React.Component<Props, State> {
                         <Text style={{ minWidth: labelWidth }}>{t("Created at")}:</Text>
                         <DatePicker
                             showTime
-                            value={post?.created_at ? dayjs(post?.created_at) : undefined}
+                            value={currentPost?.created_at ? dayjs(currentPost?.created_at) : undefined}
                             disabled={true}
                         />
                     </Flex>
@@ -218,7 +208,7 @@ export class InnerPage extends React.Component<Props, State> {
                         <Text style={{ minWidth: labelWidth }}>{t("Updated at")}:</Text>
                         <DatePicker
                             showTime
-                            value={post?.updated_at ? dayjs(post?.updated_at) : undefined}
+                            value={currentPost?.updated_at ? dayjs(currentPost?.updated_at) : undefined}
                             disabled={true}
                         />
                     </Flex>
@@ -226,12 +216,12 @@ export class InnerPage extends React.Component<Props, State> {
                         <Text style={{ minWidth: labelWidth }}>{t("Publish at")}:</Text>
                         <DatePicker
                             showTime
-                            value={post?.published_at ? dayjs(post.published_at) : undefined}
+                            value={currentPost?.published_at ? dayjs(currentPost.published_at) : undefined}
                             placeholder={t("Publish at")}
                             onChange={(published_at) => {
                                 this.setState((prevState) => ({
-                                    post: {
-                                        ...prevState.post!,
+                                    currentPost: {
+                                        ...prevState.currentPost!,
                                         published_at: published_at ? published_at.toDate() : undefined,
                                     }
                                 }));
@@ -239,11 +229,11 @@ export class InnerPage extends React.Component<Props, State> {
                         />
                         <Text>{t("Comments")}:</Text>
                         <Switch
-                            checked={post?.comment_on}
+                            checked={currentPost?.comment_on}
                             onChange={(checked) => {
                                 this.setState((prevState) => ({
-                                    post: {
-                                        ...prevState.post!,
+                                    currentPost: {
+                                        ...prevState.currentPost!,
                                         comment_on: checked,
                                     }
                                 }));
@@ -251,11 +241,11 @@ export class InnerPage extends React.Component<Props, State> {
                         />
                         <Text>{t("Private")}:</Text>
                         <Switch
-                            checked={post?.private}
+                            checked={currentPost?.private}
                             onChange={(checked) => {
                                 this.setState((prevState) => ({
-                                    post: {
-                                        ...prevState.post!,
+                                    currentPost: {
+                                        ...prevState.currentPost!,
                                         private: checked,
                                     }
                                 }));
@@ -303,11 +293,11 @@ export class InnerPage extends React.Component<Props, State> {
     };
 
     render = () => {
-        console.log("Rendering PostPage with post:", this.state.post);
-        const { showMessage, messageText, messageType, post } = this.state;
-        const content = post?.content || "vacío?";
+        console.log("Rendering PostPage with post:", this.state.currentPost);
+        const { showMessage, messageText, messageType, currentPost } = this.state;
+        const content = currentPost?.content || "vacío?";
         console.log("Content:", content);
-        console.log("MDXEditor markdown prop:", this.state.post?.content || "");
+        console.log("MDXEditor markdown prop:", this.state.currentPost?.content || "");
         return (
             <Flex
                 vertical
@@ -339,23 +329,54 @@ export default function Page() {
     const navigate = useNavigate();
     const { t } = useTranslation();
     const postSlug = useLocation().pathname.split('/')[3];
+
+    // 1. Usar useState para almacenar los datos del post y el estado de carga
+    const [post, setPost] = useState<Post | undefined>(undefined);
+    const [isLoading, setIsLoading] = useState(true);
+
+    // 2. Usar useContext para acceder a los valores del contexto (más limpio)
+    const { isLoggedIn } = useContext(AuthContext); 
+    const { isDarkMode } = useContext(ModeContext); 
+
+    // 3. Usar useEffect para la carga de datos asíncrona
+    useEffect(() => {
+        // Función asíncrona interna para ejecutar loadData
+        async function fetchPost() {
+            setIsLoading(true);
+            const slug = postSlug === "[new-post]" ? "" : postSlug || "";
+            
+            // Llamada a la función asíncrona
+            const response = await loadData<Post>("posts", new Map([["slug", slug]]));
+            
+            if (response.status === 200 && response.data) {
+                setPost(response.data);
+            } else {
+                setPost(undefined);
+                // Opcional: Manejar el error de carga aquí (ej. mostrar un mensaje)
+                console.error("Error al cargar el post:", response.status);
+            }
+            setIsLoading(false);
+        }
+
+        fetchPost();
+
+    }, [postSlug]); // Dependencia: solo se vuelve a ejecutar si cambia el slug
+
+    // 4. Manejar el estado de carga (renderizar un spinner o mensaje)
+    if (isLoading) {
+        return <div>{t('common:loading')}...</div>; // Muestra un mensaje de carga
+    }
+
+    // 5. Renderizar el componente final
+    // Ya no necesitas envolver en Consumers, lo has obtenido con useContext.
     return (
-        <AuthContext.Consumer>
-            {({ isLoggedIn }) => {
-                return <ModeContext.Consumer>
-                    {({ isDarkMode }) => {
-                        return (
-                            <InnerPage
-                                navigate={navigate}
-                                t={t}
-                                isDarkMode={isDarkMode}
-                                isLoggedIn={isLoggedIn}
-                                postSlug={postSlug === "[new-post]" ? undefined : postSlug}
-                            />
-                        );
-                    }}
-                </ModeContext.Consumer>
-            }}
-        </AuthContext.Consumer>
+        <InnerPage
+            navigate={navigate}
+            t={t}
+            isDarkMode={isDarkMode}
+            isLoggedIn={isLoggedIn}
+            post={post}
+            postSlug={postSlug === "[new-post]" ? undefined : postSlug}
+        />
     );
 }

@@ -89,8 +89,7 @@ interface Props {
 }
 
 const CrepeEditor: React.FC<Props> = (props: Props) => {
-    console.log("Contenido inicial del editor:", props.content);
-
+    console.log("Contenido inicial del editor hora:", props.content);
     const onChangeRef = useRef(props.onChange);
     useEffect(() => {
         onChangeRef.current = props.onChange;
@@ -99,6 +98,7 @@ const CrepeEditor: React.FC<Props> = (props: Props) => {
     useEditor((root) => {
         const crepe = new Crepe({
             root,
+            defaultValue: props.content,
         });
         crepe.editor
             // 3. Usa el plugin `listener` para habilitar la escucha de eventos
@@ -117,7 +117,6 @@ const CrepeEditor: React.FC<Props> = (props: Props) => {
                 // La función markdownUpdated se dispara cada vez que cambia el contenido.
                 // Recibe el contexto, el nuevo markdown y el markdown anterior.
                 listenerManager.markdownUpdated((_ctx, markdown, prevMarkdown) => {
-                    // Solo llamar al callback si el contenido realmente ha cambiado
                     if (markdown !== prevMarkdown) {
                         console.log("Contenido del editor cambiado:", markdown);
                         onChangeRef.current?.(markdown);
@@ -125,7 +124,7 @@ const CrepeEditor: React.FC<Props> = (props: Props) => {
                 });
             });
         return crepe;
-    }, [props.content]);
+    }, []);
 
     return <Milkdown />;
 };
