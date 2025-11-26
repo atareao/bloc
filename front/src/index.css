@@ -1,18 +1,8 @@
-@import './styles/_variables.scss';
-@import './styles/_keyframe-animations.scss';
-
 html, body, #root {
     padding: 0;
     margin: 0;
     height: 100%;
     width: 100%;
-}
-.tiptap {
-    min-width: 1050px;
-    height: 70vh;
-    width: 100%;
-    padding: 10px;
-    overflow-y: auto;
 }
 
 .ProseMirror:focus {
