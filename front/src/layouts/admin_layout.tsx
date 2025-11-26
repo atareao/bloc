@@ -4,9 +4,6 @@ import { Button, Layout, Menu, theme, Space } from 'antd';
 import type { MenuProps } from 'antd';
 import {
     HomeOutlined,
-    OrderedListOutlined,
-    MenuUnfoldOutlined,
-    PieChartOutlined,
     LogoutOutlined,
     UserOutlined,
 } from '@ant-design/icons';
@@ -38,24 +35,16 @@ function getItem(
 
 const navigations: { [key: string]: string } = {
     1: "/admin/dashboard",
-    2: "/admin/topics",
-    3: "/admin/requests",
-    4: "/admin/charts",
-    5: "/admin/users",
-    6: "/admin/posts",
-    7: "/admin/post",
-    8: "/admin/tags",
+    2: "/admin/posts",
+    3: "/admin/tags",
+    4: "/admin/users",
 }
 
 const items: MenuItem[] = [
     getItem('Dashboard', '1', <HomeOutlined />),
-    getItem('Topics', '2', <OrderedListOutlined />),
-    getItem('Requests', '3', <MenuUnfoldOutlined />),
-    getItem('Charts', '4', <PieChartOutlined />),
-    getItem('Users', '5', <UserOutlined />),
-    getItem('Posts', '6', <UserOutlined />),
-    getItem('Post', '7', <UserOutlined />),
-    getItem('Tags', '8', <UserOutlined />),
+    getItem('Posts', '2', <UserOutlined />),
+    getItem('Tags', '3', <UserOutlined />),
+    getItem('Users', '4', <UserOutlined />),
 ];
 
 
@@ -117,11 +106,11 @@ class InnerAdminLayout extends react.Component<Props, State> {
                                 paddingInline: 48,
                             }}
                         >
-                                                                <div style={{ display: 'flex', alignItems: 'center', flex: 1, justifyContent: 'center' }}>
-                                                                    <Space>
-                                                                        {this.state.headerButtons}
-                                                                    </Space>
-                                                                </div>                            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', flex: 1, justifyContent: 'center' }}>
+                                <Space>
+                                    {this.state.headerButtons}
+                                </Space>
+                            </div>                            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                                 <Button
                                     variant="solid"
                                     onClick={() => this.props.navigate('/admin/logout')}

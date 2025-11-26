@@ -85,11 +85,9 @@ export class InnerPage extends React.Component<Props, {}> {
         // Toda la complejidad se delega a CustomTable.
         const fields: FieldDefinition<Post>[] = [
             { key: 'id', label: 'Id', type: 'number', value: 0, editable: false, fixed: 'left', width: 80 },
-            { key: 'created_at', visible: true, label: 'Created at', type: 'date', value: "", width: 80 },
-            { key: 'published_at', visible: true, label: 'Published', type: 'date', value: "", width: 150 },
             { key: 'updated_at', visible: true, label: 'Updated', type: 'date', value: "", width: 150 },
+            { key: 'published_at', visible: true, label: 'Published', type: 'date', value: "", width: 150 },
             { key: 'title', visible: true, label: 'Title', type: 'string', value: "", width: 150 },
-            { key: 'slug', visible: true, label: 'Slug', type: 'string', value: "", width: 150 },
             { key: 'comment_on', label: 'Comments', type: 'boolean', value: false, width: 80 },
             { key: 'private', label: 'Private', type: 'boolean', value: true, width: 80 },
         ];

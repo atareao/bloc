@@ -83,6 +83,9 @@ export class InnerPage extends React.Component<Props, State> {
     render = () => {
         const { post } = this.state;
         return (
+            <div
+                className="post-container"
+            >
             <Flex
                 vertical
                 justify="center"
@@ -98,6 +101,7 @@ export class InnerPage extends React.Component<Props, State> {
                     {Parser(post?.html_content || "")}
                 </Flex>
             </Flex>
+            </div>
         );
     }
 }

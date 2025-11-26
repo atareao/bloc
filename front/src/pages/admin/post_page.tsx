@@ -13,7 +13,7 @@ import AuthContext from '@/components/auth_context';
 import type Post from "@/models/post";
 import { loadData, debounce, saveData, updateData } from "@/common/utils";
 import TabPanel from "@/components/tab_panel";
-import CustomEditor from "@/components/custom_editor"
+import { CustomEditor } from "@/components/custom_editor";
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -167,7 +167,8 @@ export class InnerPage extends React.Component<Props, State> {
         const tabEditor = (
             <CustomEditor
                 content={content}
-                onChange={(value) => {
+                isDarkMode={this.props.isDarkMode}
+                onChange={(value: string) => {
                     this.setState((prevState) => ({
                         post: {
                             ...prevState.post!,
@@ -202,6 +203,22 @@ export class InnerPage extends React.Component<Props, State> {
                         <Input
                             placeholder={t("Slug")}
                             value={post?.slug}
+                            disabled={true}
+                        />
+                    </Flex>
+                    <Flex gap="middle">
+                        <Text style={{ minWidth: labelWidth }}>{t("Created at")}:</Text>
+                        <DatePicker
+                            showTime
+                            value={post?.created_at ? dayjs(post?.created_at) : undefined}
+                            disabled={true}
+                        />
+                    </Flex>
+                    <Flex gap="middle">
+                        <Text style={{ minWidth: labelWidth }}>{t("Updated at")}:</Text>
+                        <DatePicker
+                            showTime
+                            value={post?.updated_at ? dayjs(post?.updated_at) : undefined}
                             disabled={true}
                         />
                     </Flex>
@@ -276,7 +293,7 @@ export class InnerPage extends React.Component<Props, State> {
                 key: '2',
                 label: t("Meta"),
                 children: <TabPanel value={tabValue} index={2}>{tabMeta}</TabPanel>,
-            }
+            },
         ]
 
     }
