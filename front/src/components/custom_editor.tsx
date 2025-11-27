@@ -108,7 +108,7 @@ const CrepeEditor: React.FC<Props> = (props: Props) => {
             .config((ctx) => {
                 ctx.update(uploadConfig.key, (prev) => ({
                     ...prev,
-                    uploader,
+                    ...{uploader: uploader},
                 }));
                 // Configurar el valor por defecto (opcional, pero buena práctica)
                 ctx.set(defaultValueCtx, props.content);

@@ -16,6 +16,8 @@
     "@milkdown/crepe": "^7.17.2",
     "@milkdown/kit": "^7.17.2",
     "@milkdown/plugin-listener": "^7.17.2",
+    "@milkdown/plugin-slash": "^7.17.2",
+    "@milkdown/plugin-upload": "^7.17.2",
     "@milkdown/prose": "^7.17.2",
     "@milkdown/react": "^7.17.2",
     "@milkdown/utils": "^7.17.2",
