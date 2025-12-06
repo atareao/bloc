@@ -24,6 +24,7 @@ const PostPage = lazy(() => import('@/pages/admin/post_page'));
 const TagsPage = lazy(() => import('@/pages/admin/tags_page'));
 const PublicPostPage = lazy(() => import('@/pages/public/post_page'));
 const PublicPostsPage = lazy(() => import('@/pages/public/posts_page'));
+const BlogTemplatePage = lazy(() => import('@/pages/admin/templates/blog'));
 
 import '@/App.css'
 
@@ -73,6 +74,9 @@ export default class App extends React.Component {
                                                     <Route path="dashboard" element={<DashboardPage />} />
                                                     <Route path="users" element={<UsersPage />} />
                                                     <Route path="tags" element={<TagsPage />} />
+                                                    <Route path="templates" >
+                                                        <Route path="blog" element={<BlogTemplatePage />} />
+                                                    </Route>
                                                     <Route path="posts" >
                                                         <Route index element={<PostsPage />} />
                                                         <Route path=":slug" element={<PostPage />} />
