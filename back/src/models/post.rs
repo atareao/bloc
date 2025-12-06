@@ -1,5 +1,6 @@
 use chrono::{DateTime, Utc};
 use md_to_text::convert;
+use once_cell::sync::Lazy;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use slug::slugify;
@@ -8,25 +9,21 @@ use sqlx::{
     postgres::{PgPool, PgRow},
     query, query_as,
 };
-use once_cell::sync::Lazy;
 use tracing::debug;
 
 use crate::constants::{DEFAULT_LIMIT, DEFAULT_PAGE};
 use crate::utils::markdown_to_html;
 
-static MAIN_TITLE_REGEX: Lazy<Regex> = Lazy::new(||
-    Regex::new(r##"^#\s+(.*)$"##).unwrap()
-);
-static MAIN_IMAGE_REGEX: Lazy<Regex> = Lazy::new(||
-    Regex::new(r##"!\[(.*?)\]\((.*?)(?: "(.*?)")?\)"##).unwrap()
-);
-
+static MAIN_TITLE_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r##"^#\s+(.*)$"##).unwrap());
+static MAIN_IMAGE_REGEX: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r##"!\[(.*?)\]\((.*?)(?: "(.*?)")?\)"##).unwrap());
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct NewPost {
     pub title: Option<String>,
     pub slug: Option<String>,
     pub content: String,
+    pub markdown: String,
     pub excerpt: Option<String>,
     pub meta: Option<String>,
     pub outline: Option<String>,
@@ -42,6 +39,7 @@ pub struct Post {
     pub title: String,
     pub slug: String,
     pub content: String,
+    pub markdown: String,
     pub excerpt: Option<String>,
     pub meta: Option<String>,
     pub outline: Option<String>,
@@ -66,6 +64,7 @@ pub struct HtmlPost {
     pub title: String,
     pub slug: String,
     pub content: String,
+    pub markdown: String,
     pub html_content: String,
     pub excerpt: Option<String>,
     pub html_excerpt: Option<String>,
@@ -100,13 +99,14 @@ impl HtmlPost {
             title: post.title.clone(),
             slug: post.slug.clone(),
             content: post.content.clone(),
-            html_content: markdown_to_html(&post.content),
+            markdown: post.markdown.clone(),
+            html_content: markdown_to_html(&post.markdown),
             excerpt: post.excerpt.clone(),
             html_excerpt: post.excerpt.as_ref().map(|e| markdown_to_html(e)),
             meta: post.meta.clone(),
             clean_meta: post.meta.as_ref().map(|m| convert(m)),
             html_meta: post.meta.as_ref().map(|m| markdown_to_html(m)),
-            image: get_first_image(&post.content),
+            image: get_first_image(&post.markdown),
             outline: post.outline.clone(),
             comment_on: post.comment_on,
             private: post.private,
@@ -124,13 +124,14 @@ impl Post {
             return Err(Error::Decode("Content cannot be empty".into()));
         }
         let title =
-            get_title(&post.content).ok_or(Error::Decode("Not found title in content".into()))?;
+            get_title(&post.markdown).ok_or(Error::Decode("Not found title in content".into()))?;
         let slug = slugify(&title);
         let now = Utc::now();
         let sql = "INSERT INTO posts (
                 title,
                 slug,
                 content,
+                markdown,
                 excerpt, 
                 meta,
                 outline,
@@ -142,12 +143,13 @@ impl Post {
                 updated_at
             )
             VALUES (
-                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13
             ) RETURNING *";
         query_as::<_, Post>(sql)
             .bind(title)
             .bind(slug)
             .bind(&post.content)
+            .bind(&post.markdown)
             .bind(&post.excerpt)
             .bind(&post.meta)
             .bind(&post.outline)
@@ -166,28 +168,30 @@ impl Post {
             return Err(Error::Decode("Content cannot be empty".into()));
         }
         let title =
-            get_title(&post.content).ok_or(Error::Decode("Not found title in content".into()))?;
+            get_title(&post.markdown).ok_or(Error::Decode("Not found title in content".into()))?;
         let slug = slugify(&title);
         let sql = "UPDATE posts set 
                 title = $1,
                 slug = $2,
                 content = $3,
-                excerpt = $4,
-                meta = $5,
-                outline = $6,
-                comment_on = $7,
-                private = $8,
-                audio_url = $9,
-                published_at = $10,
-                updated_at = $11
+                markdown = $4,
+                excerpt = $5,
+                meta = $6,
+                outline = $7,
+                comment_on = $8,
+                private = $9,
+                audio_url = $10,
+                published_at = $11,
+                updated_at = $12
             WHERE
-                id = $12
+                id = $13
             RETURNING *";
         let now = Utc::now();
         query_as::<_, Post>(sql)
             .bind(&title)
             .bind(&slug)
             .bind(&post.content)
+            .bind(&post.markdown)
             .bind(&post.excerpt)
             .bind(&post.meta)
             .bind(&post.outline)

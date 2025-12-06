@@ -13,7 +13,7 @@ import AuthContext from '@/components/auth_context';
 import type Post from "@/models/post";
 import { loadData, debounce, saveData, updateData } from "@/common/utils";
 import TabPanel from "@/components/tab_panel";
-import { CustomEditor } from "@/components/custom_editor";
+import CustomEditor from "@/components/editor/custom_editor";
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -110,7 +110,7 @@ export class InnerPage extends React.Component<Props, State> {
             this.showMessage(this.props.t("Content can not be empty"), "error");
             return;
         }
-        if (!this.state.currentPost.content.startsWith("# ")) {
+        if (!this.state.currentPost.markdown.startsWith("# ")) {
             this.showMessage(this.props.t("Content must starts with title '# '"), "error");
             return;
         }
@@ -123,7 +123,7 @@ export class InnerPage extends React.Component<Props, State> {
             response = await saveData<Post>("posts", this.state.currentPost);
         }
 
-        if (response.status === 200 && response.data) {
+        if ((response.status === 200 || response.status === 201) && response.data) {
             this.showMessage(this.props.t("Post saved successfully"), "success");
             this.setState({
                 currentPost: {
@@ -158,11 +158,12 @@ export class InnerPage extends React.Component<Props, State> {
             <CustomEditor
                 content={ post?.content || ""}
                 isDarkMode={this.props.isDarkMode}
-                onChange={(value: string) => {
+                onChange={(content: string, markdown) => {
                     this.setState((prevState) => ({
                         currentPost: {
                             ...prevState.currentPost!,
-                            content: value
+                            content: content,
+                            markdown: markdown,
                         }
                     }));
                 }}
