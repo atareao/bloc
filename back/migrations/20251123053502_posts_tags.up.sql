@@ -6,3 +6,8 @@ CREATE TABLE IF NOT EXISTS posts_tags (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     UNIQUE (post_id, tag_id)
 );
+
+CREATE TRIGGER update_posts_tags_updated_at
+BEFORE UPDATE ON posts_tags
+FOR EACH ROW
+EXECUTE PROCEDURE update_updated_at_column();

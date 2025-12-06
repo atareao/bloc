@@ -1,3 +1,4 @@
+mod settings;
 mod response;
 mod user;
 mod post;

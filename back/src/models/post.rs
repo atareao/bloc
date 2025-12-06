@@ -126,7 +126,6 @@ impl Post {
         let title =
             get_title(&post.markdown).ok_or(Error::Decode("Not found title in content".into()))?;
         let slug = slugify(&title);
-        let now = Utc::now();
         let sql = "INSERT INTO posts (
                 title,
                 slug,
@@ -138,12 +137,10 @@ impl Post {
                 comment_on,
                 private,
                 audio_url,
-                published_at,
-                created_at,
-                updated_at
+                published_at
             )
             VALUES (
-                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
             ) RETURNING *";
         query_as::<_, Post>(sql)
             .bind(title)
@@ -157,8 +154,6 @@ impl Post {
             .bind(post.private)
             .bind(&post.audio_url)
             .bind(post.published_at)
-            .bind(now)
-            .bind(now)
             .fetch_one(pool)
             .await
     }
@@ -181,12 +176,10 @@ impl Post {
                 comment_on = $8,
                 private = $9,
                 audio_url = $10,
-                published_at = $11,
-                updated_at = $12
+                published_at = $11
             WHERE
-                id = $13
+                id = $12
             RETURNING *";
-        let now = Utc::now();
         query_as::<_, Post>(sql)
             .bind(&title)
             .bind(&slug)
@@ -199,7 +192,6 @@ impl Post {
             .bind(post.private)
             .bind(&post.audio_url)
             .bind(post.published_at)
-            .bind(now)
             .bind(post.id)
             .fetch_one(pool)
             .await

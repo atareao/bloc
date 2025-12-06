@@ -39,22 +39,17 @@ pub struct ReadTagParams {
 
 impl Tag {
     pub async fn create(pool: &PgPool, tag: &mut NewTag) -> Result<Tag, Error> {
-        let now = Utc::now();
         let slug = slugify(&tag.tag);
         let sql = "INSERT INTO tags (
                 tag,
-                slug,
-                created_at,
-                updated_at
+                slug
             )
             VALUES (
-                $1, $2, $3, $4
+                $1, $2
             ) RETURNING *";
         query_as::<_, Tag>(sql)
             .bind(&tag.tag)
             .bind(&slug)
-            .bind(now)
-            .bind(now)
             .fetch_one(pool)
             .await
     }
@@ -63,16 +58,13 @@ impl Tag {
         let slug = slugify(&tag.tag);
         let sql = "UPDATE tags set 
                 tag = $1,
-                slug = $2,
-                updated_at = $6
+                slug = $2
             WHERE
-                id = $7
+                id = $3
             RETURNING *";
-        let now = Utc::now();
         query_as::<_, Tag>(sql)
             .bind(&tag.tag)
             .bind(&slug)
-            .bind(now)
             .bind(tag.id)
             .fetch_one(pool)
             .await

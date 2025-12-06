@@ -45,27 +45,22 @@ pub struct ReadCommentParams {
 
 impl Comment {
     pub async fn create(pool: &PgPool, comment: &mut NewComment) -> Result<Comment, Error> {
-        let now = Utc::now();
         let sql = "INSERT INTO comments (
                 post_id,
                 parent_id,
                 nikename,
                 content,
-                approved,
-                created_at,
-                updated_at
+                approved
             )
             VALUES (
-                $1, $2, $3, $4, $5, $6, $7
+                $1, $2, $3, $4, $5
             ) RETURNING *";
         query_as::<_, Comment>(sql)
             .bind(comment.post_id)
             .bind(comment.parent_id)
             .bind(&comment.nikename)
             .bind(&comment.content)
-            .bind(&comment.approved)
-            .bind(now)
-            .bind(now)
+            .bind(comment.approved)
             .fetch_one(pool)
             .await
     }
@@ -76,19 +71,16 @@ impl Comment {
                 parent_id = $2,
                 nikename = $3,
                 content = $4,
-                approved = $5,
-                updated_at = $6
+                approved = $5
             WHERE
-                id = $7
+                id = $6
             RETURNING *";
-        let now = Utc::now();
         query_as::<_, Comment>(sql)
             .bind(comment.post_id)
             .bind(comment.parent_id)
             .bind(&comment.nikename)
             .bind(&comment.content)
             .bind(comment.approved)
-            .bind(now)
             .bind(comment.id)
             .fetch_one(pool)
             .await
