@@ -239,11 +239,14 @@ class InnerAdminLayout extends react.Component<Props, State> {
                                 </Button>
                                 <ModeSwitcher />
                             </div>                        </Header>
-                        <Content>
+                        <Content style={{ flex: 1 }}>
                             <div
                                 style={{
                                     padding: 0,
-                                    minHeight: 360,
+                                    height: "100%",
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    flexGrow: 1
                                 }}
                             >
                                 <Outlet />

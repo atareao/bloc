@@ -135,7 +135,7 @@ export class InnerPage extends React.Component<Props, State> {
             <Flex
                 vertical
                 gap="middle"
-                style={{ width: "100%" }}
+                style={{ width: "100%", height: "100%", flex: 1 }}
             >
                 {showMessage &&
                     <Alert
@@ -147,11 +147,17 @@ export class InnerPage extends React.Component<Props, State> {
                         style={{ margin: 16 }}
                     />
                 }
-                <div style={{
-                    width: "100%",
-                    height: "100%",
-                    flexGrow: 1,
-                }}>
+                <div
+                    style={{
+                        width: "100%",
+                        height: "100%",
+                        padding: 20,
+                        flexGrow: 1,
+                        display: "flex",
+                        flexDirection: "column",
+                        position: "relative"
+                    }}
+                >
                     <CodeMirror
                         //value={this.state.code || "Hola esto es una prueba de mierda"}
                         value={"Hola esto es una prueba de mierda"}
@@ -161,6 +167,7 @@ export class InnerPage extends React.Component<Props, State> {
                         theme={this.props.isDarkMode ? "dark" : "light"}
                         height="100%"
                         minHeight="100%"
+                        className="full-height-codemirror"
                     />
                 </div>
             </Flex>
