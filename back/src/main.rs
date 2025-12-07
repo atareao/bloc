@@ -129,7 +129,7 @@ async fn main() -> Result<(), Error> {
         .layer(cors);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;
-    tracing::info!("🚀 Server started successfully");
+    tracing::info!("🚀 Server started successfully 🚀");
     axum::serve(listener, app).await?;
 
     Ok(())
