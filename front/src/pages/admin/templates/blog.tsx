@@ -1,7 +1,7 @@
 import React, { useContext } from "react";
 import { useNavigate } from 'react-router'; // 1. Añadido useParams
 import { useTranslation } from "react-i18next";
-import { Button, Tooltip, Flex, Alert, Card } from 'antd';
+import { Button, Tooltip, Flex, Alert } from 'antd';
 import CheckOutlined from '@ant-design/icons/CheckOutlined';
 import CloseOutlined from '@ant-design/icons/CloseOutlined';
 import SaveOutlined from '@ant-design/icons/SaveOutlined';
