@@ -1,4 +1,4 @@
-current_version: 0.1.20
+current_version: 0.1.21
 replaces:
 - file: back/Cargo.toml
   pattern: ^version\s*=\s*\"{{current_version}}\"$
