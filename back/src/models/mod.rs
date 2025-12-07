@@ -25,6 +25,7 @@ use sqlx::postgres::PgPool;
 pub struct AppState {
     pub pool: PgPool,
     pub secret: String,
+    pub static_dir: PathBuf,
     pub upload_dir: PathBuf,
     pub base_url: String,
 }

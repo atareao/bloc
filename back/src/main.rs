@@ -110,7 +110,8 @@ async fn main() -> Result<(), Error> {
         .with_state(Arc::new(AppState {
             pool,
             secret,
-            upload_dir: "static/images".into(),
+            static_dir: "static".into(),
+            upload_dir: "uploads".into(),
             base_url,
     }));
 

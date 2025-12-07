@@ -60,8 +60,11 @@ async fn upload_image(
         let final_filename = format!("{}.{}", file_uuid, extension);
 
         // --- 4. Construir la ruta completa de guardado ---
-        let target_dir = state.upload_dir.join(&date_path);
-        let final_path = target_dir.join(&final_filename);
+        let target_dir = state.static_dir
+            .join(state.upload_dir.as_path())
+            .join(&date_path);
+        let final_path = target_dir
+            .join(&final_filename);
 
         debug!("Guardando archivo en: {:?}", final_path);
 
@@ -84,9 +87,12 @@ async fn upload_image(
                     .into_response();
             }
         }
-        let relative_path = format!("{}/images/{}/{}",
+        debug!("Base url: {}", state.base_url);
+        let relative_path = format!("{}/{}/{}/{}",
             state.base_url,
+            state.upload_dir.to_str().unwrap_or("uploads"),
             date_path, final_filename);
+        debug!("File url: {}", &relative_path);
         return ApiResponse::new(
             StatusCode::OK,
             "File uploaded successfully",
