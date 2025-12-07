@@ -125,7 +125,8 @@ async fn main() -> Result<(), Error> {
 
     let app = Router::new()
         .nest("/api/v1", api_routes)
-        .fallback_service(ServeDir::new("static").fallback(ServeFile::new("static/index.html")))
+        .fallback_service(ServeDir::new("static")
+        .fallback(ServeFile::new("static/index.html")))
         .layer(TraceLayer::new_for_http())
         .layer(cors);
 

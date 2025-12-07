@@ -1,5 +1,6 @@
 # Directorio de artefactos de rust
 target
+static/uploads
 # Directorio de artefactos de Node
 node_modules
 # Ignorar carpetas de control de versiones
