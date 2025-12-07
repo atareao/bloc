@@ -1,0 +1,67 @@
+body, html {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+  }
+
+  header {
+    background: #0275d8;
+    color: white;
+    top: 0;
+    width: 100%;
+    z-index: 10;
+    position: sticky;
+    padding: 10px 0;
+  }
+
+  header nav a {
+    color: white;
+    text-decoration: none;
+    margin: 0 15px;
+  }
+
+  header.scrolled {
+    background: #025aa5;
+    padding: 5px 0;
+  }
+
+  main {
+    padding: 20px;
+    background: #f9f9f9;
+  }
+
+  .container {
+    max-width: 1200px;
+    margin: auto;
+  }
+
+  .hero {
+    text-align: center;
+    padding: 50px 20px;
+  }
+
+  .services {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    margin-top: 20px;
+  }
+
+  .services h2 {
+    color: #0275d8;
+  }
+
+  .services p {
+    color: #333;
+  }
+
+  .footer {
+    background: #333;
+    color: white;
+    text-align: center;
+    padding: 20px 0;
+  }
+  
+  header nav a:hover, .footer a:hover {
+    text-decoration: underline;
+  }

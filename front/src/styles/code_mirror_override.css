@@ -1,0 +1,19 @@
+/* Styling for the custom class applied to CodeMirror component */
+.full-height-codemirror {
+    flex: 1; /* Allow CodeMirror to grow and fill available space in flex container */
+    height: 100%; /* Important for the CodeMirror component itself */
+}
+
+/* CodeMirror's internal classes, nested under our custom class */
+.full-height-codemirror .cm-editor {
+    height: 100%; /* The actual editor element */
+}
+
+.full-height-codemirror .cm-scroller {
+    position: absolute; /* Position absolutely to fill the .cm-editor */
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    overflow-y: auto; /* Enable vertical scrolling if content overflows */
+}
