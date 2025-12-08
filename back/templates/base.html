@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>{% block title %}Mi Blog | atareao con Linux{% endblock %}</title>
+    
+    <meta name="author" content="Lorenzo Carbonell">
+    <meta name="publisher" content="atareao con Linux">
+    <meta property="og:site_name" content="atareao con Linux">
+    <meta name="twitter:creator" content="@atareao">
+
+    {% block meta_specific %}
+    <meta name="description" content="El podcast de Lorenzo Carbonell sobre Linux y software de código abierto. Tutoriales prácticos y soluciones para la productividad.">
+    <link rel="canonical" href="https://atareao.es/">
+    {% endblock %}
+    
+    {% block seo_jsonld %}{% endblock %}
+
+    <link rel="stylesheet" href="/share/styles.css">
+    
+</head>
+<body {% if theme_is_light %}class="light-theme"{% endif %}>
+
+    <header id="header">
+        <div class="header-container">
+            <a href="/home/" class="site-logo">Mi Blog</a> 
+            
+            <div class="header-right">
+                <div class="theme-switch-wrapper">
+                    <input type="checkbox" id="checkbox" aria-label="Cambiar tema de claro a oscuro">
+                    <label for="checkbox" class="theme-switch">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+                
+                <button class="menu-toggle" id="menu-toggle" aria-expanded="false" aria-controls="main-nav">
+                    <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+                </button>
+            </div>
+
+            <nav id="main-nav">
+                <ul>
+                    <li><a href="/home/">Home</a></li>
+                    <li><a href="/blog/">Blog</a></li>
+                    <li><a href="/about/">Acerca de</a></li>
+                    <li><a href="/contact/">Contacto</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+    
+    <footer>
+        <div class="footer-container">
+            <p>&copy; 2025 atareao con Linux. Todos los derechos reservados. Autor: Lorenzo Carbonell.</p>
+            <nav>
+                <a href="/privacidad/">Política de Privacidad</a> | <a href="/legal/">Aviso Legal</a>
+            </nav>
+        </div>
+    </footer>
+    
+    <script src="/share/script.js"></script>
+    
+</body>
+</html>

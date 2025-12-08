@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Archivo de Artículos | atareao con Linux{% end block %}
+
+{% block content %}
+    <h1 class="page-title">Últimos Tutoriales de Linux y Productividad</h1>
+    
+    <section class="articles-list-container">
+    
+        {# Itera sobre los 10 artículos de la página actual #}
+        {% for article in articles %}
+        
+            <article class="post-preview">
+                <header>
+                    {# Título con enlace #}
+                    <h2><a href="{{ article.url }}">{{ article.title }}</a></h2>
+                    
+                    {# Metadatos de la vista previa #}
+                    <p class="post-meta">
+                        Publicado el {{ article.date_published_readable }}
+                        {% if article.category %} en <a href="/category/{{ article.category | lower }}">{{ article.category }}</a>{% endif %}
+                    </p>
+                </header>
+                
+                {# Resumen o Descripción #}
+                <div class="post-excerpt">
+                    <p>{{ article.excerpt }}</p>
+                </div>
+                
+                {# Enlace para leer el artículo completo #}
+                <a href="{{ article.url }}" class="read-more-link">Continuar leyendo...</a>
+            </article>
+            
+            {# Separador visual entre artículos #}
+            <hr class="article-separator">
+            
+        {% endfor %}
+        
+    </section>
+    
+    {# --------------------------------------------- #}
+    {# CONTROL DE PAGINACIÓN #}
+    {# --------------------------------------------- #}
+    <nav class="pagination" role="navigation" aria-label="Navegación de artículos">
+        {% if current_page > 1 %}
+            <a href="/blog/page/{{ current_page - 1 }}/" class="prev-page tag-pill">← Anteriores</a>
+        {% else %}
+            <span class="prev-page disabled tag-pill">← Anteriores</span>
+        {% endif %}
+
+        <span class="page-info">Página {{ current_page }} de {{ total_pages }}</span>
+
+        {% if current_page < total_pages %}
+            <a href="/blog/page/{{ current_page + 1 }}/" class="next-page tag-pill">Siguientes →</a>
+        {% else %}
+            <span class="next-page disabled tag-pill">Siguientes →</span>
+        {% endif %}
+    </nav>
+
+{% endblock %}

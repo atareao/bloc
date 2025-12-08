@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{# --------------------------------------------- #}
+{# 1. Metadatos Específicos del Artículo #}
+{# --------------------------------------------- #}
+
+{% block title %}{{ article.title }} | atareao con Linux{% endblock %}
+
+{% block meta_specific %}
+    <meta name="description" content="{{ article.description }}">
+    <link rel="canonical" href="{{ article.url }}">
+
+    <meta property="og:title" content="{{ article.title }}">
+    <meta property="og:description" content="{{ article.description }}">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="{{ article.url }}">
+    {% if article.image %}
+        <meta property="og:image" content="{{ article.image }}">
+    {% endif %}
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ article.title }}">
+{% endblock %}
+
+{% block seo_jsonld %}
+    {% if article.title %}
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "{{ article.title }}",
+      // ... (Otros campos del JSON-LD usando variables de article)
+      "keywords": [ {% for tag in article.tags %}"{{ tag }}"{% if not loop.last %}, {% endif %}{% endfor %} ]
+    }
+    </script>
+    {% endif %}
+{% endblock %}
+
+
+{# --------------------------------------------- #}
+{# 2. Contenido Principal del Artículo #}
+{# --------------------------------------------- #}
+
+{% block content %}
+    
+    {% if article.toc %}
+    <nav id="table-of-contents">
+        <p class="toc-title">Tabla de Contenidos</p>
+        <ul class="toc-list">
+            {% for item in article.toc %}
+                <li class="toc-level-{{ item.level }}">
+                    <a href="#{{ item.id }}">
+                        {{ item.text }}
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+    </nav>
+    {% endif %}
+    
+    <article>
+        
+        <header>
+            <h1><span class="first-letter">{{ article.title[0] }}</span>{{ article.title[1:] }}</h1>
+            <p class="subtitle">{{ article.subtitle }}</p>
+            <p class="fecha-autor">Publicado el {{ article.date_published_readable }} por Lorenzo Carbonell</p>
+        </header>
+        
+        {{ article.body_html | safe }}
+        
+        <footer>
+            <div class="article-tags">
+                <p>Categorías y Tecnologías:</p>
+                <ul class="tags-list">
+                    {% for tag in article.tags %}
+                        <li><a href="/tag/{{ tag | lower | replace(' ', '-') }}" class="tag-pill">{{ tag }}</a></li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </footer>
+        
+    </article>
+{% endblock %}
