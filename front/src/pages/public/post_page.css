@@ -2,7 +2,7 @@
 @import url('https://fonts.googleapis.com/css?family=Lato:400,700|Lora|Playfair+Display:700i,900');
 
 /* Estilo de la Selección (Manteniendo tu estilo) */
-.post::selection {
+article::selection {
   background-color: lavender;
 }
 
@@ -11,12 +11,12 @@
 /* ---------------------------------------------------- */
 
 /* Este contenedor asegura que todo el contenido esté centrado y tenga un ancho máximo cómodo */
-.post-container {
+.article-container {
   display: flex;
   justify-content: center;
 }
 
-.post {
+article {
   /* Ancho máximo del texto para una lectura cómoda (como Medium) */
   max-width: 900px; 
   /* Asegura que el contenido ocupe el espacio disponible y esté centrado */
@@ -24,13 +24,13 @@
 }
 
 /* Optimización de Legibilidad */
-.post h1,
-.post h2,
-.post p,
-.post i,
-.post a,
-.post .first-letter,
-.post .authorName a {
+article h1,
+article h2,
+article p,
+article i,
+article a,
+article .first-letter,
+article .authorName a {
   text-rendering: optimizeLegibility;
 }
 
@@ -39,7 +39,7 @@
 /* --- 2. Tipografía y Márgenes por Defecto (Escritorio) --- */
 /* ---------------------------------------------------- */
 
-.post h1 {
+article h1 {
   font-family: "Playfair Display", serif;
   font-size: 2.2rem; /* Ligeramente más grande para énfasis */
   text-align: left;
@@ -47,14 +47,14 @@
   line-height: 1.2;
 }
 
-.post .subtitle {
+article .subtitle {
   font-family: "Lato", sans-serif;
   color: rgba(0, 0, 0, 0.54);
   font-size: 1.1rem; /* Ajustado */
   margin: 0 0 40px 0; /* Más espacio después del subtítulo */
 }
 
-.post h2 {
+article h2 {
   font-family: "Lato", sans-serif;
   font-size: 1.8rem; /* Ajustado para jerarquía */
   font-weight: 700;
@@ -65,14 +65,14 @@
   letter-spacing: -0.45px;
 }
 
-.post p, .post i, .post a {
+article p, .post i, .post a {
   font-family: "Lato", sans-serif;
   font-size: 1.3rem; /* El texto base de Medium es ligeramente más pequeño y usa un interlineado generoso */
   line-height: 1.7; /* Interlineado generoso para mejor lectura */
 margin-bottom: 0px;
 }
 
-.post a {
+article a {
   text-decoration: underline;
   color: inherit; /* Para que el color no desentone si no se define */
 }
@@ -81,7 +81,7 @@ margin-bottom: 0px;
 /* --- 3. Elementos Especiales --- */
 /* ---------------------------------------------------- */
 
-.post blockquote {
+article blockquote {
   font-family: "Playfair Display", serif;
   font-size: 28px; /* Ajustado */
   font-style: italic;
@@ -96,7 +96,7 @@ margin-bottom: 0px;
   /* border-left: 3px solid rgba(0, 0, 0, 0.68); */ /* Opción alternativa si no se quiere centrar */
 }
 
-.post code {
+article code {
   font-size: 1rem; /* Más pequeño para que no rompa el flujo */
   background: rgba(0,0,0,.05);
   border-radius: 4px;
@@ -105,7 +105,7 @@ margin-bottom: 0px;
 }
 
 /* Para bloques de código de varias líneas */
-.post pre {
+article pre {
   margin: 30px 0;
   padding: 15px;
   background: #f7f7f7;
@@ -114,7 +114,7 @@ margin-bottom: 0px;
 }
 
 /* Aplicamos la fuente monoespaciada al contenido dentro del bloque <pre> */
-.post pre code {
+article pre code {
   /* Reiniciamos el fondo y el padding para que el fondo lo ponga el <pre> */
   background: none;
   padding: 0;
@@ -127,18 +127,18 @@ margin-bottom: 0px;
   display: block; /* Ocupa todo el ancho */
 }
 
-.post mark, .post .highlighted {
+article mark, .post .highlighted {
   background: #7DFFB3;
 }
 
-.post img {
+article img {
     max-width: 100%;
     height: auto;
     display: block;
     margin: 0px auto; /* Centra las imágenes y les da espacio */
 }
 
-.post .first-letter {
+article .first-letter {
   overflow-wrap: break-word;
   font-family: "Playfair Display", serif;
   font-size: 5rem; /* Más grande */

@@ -1,32 +1,117 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SEO Optimzied Sticky Header Example</title>
-<link rel="stylesheet" href="/share/styles.css">
-</head>
-<body>
+<html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>SEO Optimzied Sticky Header Example</title>
+        <link rel="stylesheet" href="/share/styles.css">
+    </head>
+    <body>
+        <header id="header">
+            <div class="header-container">
+                <a href="/home/" class="site-logo">Mi Blog</a> 
+                <div class="header-right">
+                    <div class="theme-switch-wrapper">
+                        <input type="checkbox" id="checkbox" aria-label="Cambiar tema de claro a oscuro">
+                        <label for="checkbox" class="theme-switch">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <button class="menu-toggle" id="menu-toggle" aria-expanded="false" aria-controls="main-nav">
+                        <span class="bar"></span>
+                        <span class="bar"></span>
+                        <span class="bar"></span>
+                    </button>
+                </div>
 
-<header id="header">
-  <nav>
-    <a href="#">Home</a>
-    <a href="#">About</a>
-    <a href="#">SEO Services</a>
-    <a href="#">Contact</a>
-  </nav>
-</header>
+                <nav id="main-nav">
+                    <ul>
+                        <li><a href="/home/">Home</a></li>
+                        <li><a href="/blog/">Blog</a></li>
+                        <li><a href="/about/">About</a></li>
+                        <li><a href="/contact/">Contact</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </header>
+        <main>
+    <article>
+        
+        <header>
+            <h1><span class="first-letter">D</span>ocker y Raspberry Pi: Optimizando Recursos para Contenedores Ligeros</h1>
+            <p class="subtitle">La guía definitiva para exprimir al máximo tus VPS o Raspberry Pi con Docker Compose y límites de memoria.</p>
+            <p class="fecha-autor">Publicado el 07 de Diciembre de 2025 | Autor: Lorenzo Carbonell</p>
+        </header>
+        
+        <section id="introduccion">
+            <h2>El Desafío del Hardware Limitado</h2>
+            <p>Como autor del podcast "atareao con Linux", sé que muchos de nosotros, buscando eficiencia y control, montamos nuestros servicios (servidores web, Traefik, bases de datos) en plataformas de bajo consumo como la Raspberry Pi o un VPS pequeño. El problema es: **¿cómo asegurar que Docker no agote nuestros recursos?**</p>
+            <p>La clave no está solo en usar imágenes ligeras, sino en declarar y limitar explícitamente el uso de RAM y CPU. Esto es especialmente crítico cuando ejecutamos software como **Syncthing** o **PostgreSQL** en contenedores.</p>
+        </section>
+        
+        <section id="docker-compose-limits">
+            <h2>Paso 1: Definiendo Límites con Docker Compose</h2>
+            <p>Docker Compose nos ofrece una forma declarativa de gestionar los recursos de nuestros servicios. En lugar de dejar que un contenedor consuma toda la memoria disponible, podemos establecer un límite estricto (`limits`) y una reserva blanda (`reservations`).</p>
+            
+            <h3>Ejemplo de `docker-compose.yml` optimizado:</h3>
+            <p>Aquí definimos límites para un contenedor web simple que no debería exceder los 128MB de RAM:</p>
+            
+            <pre><code>version: "3.7"
+services:
+  nginx-web:
+    image: nginx:stable-alpine
+    restart: always
+    ports:
+      - "80:80"
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: '0.50' # Limita el uso a medio núcleo
+        reservations:
+          memory: 32M # Mínimo que siempre tendrá disponible
+</code></pre>
+            <p>Utilizar la imagen `alpine` garantiza que estamos partiendo de la base más pequeña posible, optimizando el uso del disco y el inicio.</p>
+        </section>
+        
+        <section id="otras-optimizaciones">
+            <h2>Paso 2: Optimizaciones Adicionales para la Productividad</h2>
+            <blockquote>
+                "En Linux, la productividad no se trata solo de la velocidad, sino de la eficiencia de los recursos que administras."
+            </blockquote>
+            <p>Más allá de Docker, siempre recomiendo revisar estos puntos en tu sistema Linux base:</p>
+            
+            <ul>
+                <li>**Deshabilitar servicios innecesarios:** Si estás usando un VPS sin interfaz gráfica, asegúrate de deshabilitar cualquier servicio relacionado con el escritorio (como extensiones de **GNOME** o servicios gráficos).</li>
+                <li>**Limpieza del sistema:** Utiliza `docker system prune` regularmente para eliminar imágenes, contenedores y volúmenes sin usar.</li>
+                <li>**Compilación nativa:** Si estás trabajando con lenguajes como **Rust**, compila binarios específicamente para la arquitectura ARM de la Raspberry Pi para obtener mejor rendimiento nativo.</li>
+            </ul>
+        </section>
 
-<main>
-  <section>
-    <p>Your content goes here...</p>
-    <!-- Add a lot of content here to enable scrolling -->
-  </section>
+        <footer>
+            <div class="article-tags">
+                <p>Categorías y Tecnologías:</p>
+                <ul class="tags-list">
+                    <li><a href="/tag/docker" class="tag-pill">Docker</a></li>
+                    <li><a href="/tag/raspberry-pi" class="tag-pill">Raspberry Pi</a></li>
+                    <li><a href="/tag/productividad" class="tag-pill">Productividad</a></li>
+                    <li><a href="/tag/linux" class="tag-pill">Linux</a></li>
+                    <li><a href="/tag/yaml" class="tag-pill">YAML</a></li>
+                </ul>
+            </div>
+        </footer>
+        
+    </article>
 </main>
 
-<script src="/share/script.js"></script>
-</body>
+        <footer>
+            <div class="footer-container">
+                <p>&copy; 2025 Nombre del Blog. Todos los derechos reservados.</p>
+                <nav>
+                    <a href="#">Política de Privacidad</a> | <a href="#">Aviso Legal</a>
+                </nav>
+            </div>
+        </footer>
+        <script src="/share/script.js"></script>
+    </body>
 </html>
-
-
-
