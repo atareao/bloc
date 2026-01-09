@@ -78,8 +78,8 @@ importers:
         specifier: ^15.7.4
         version: 15.7.4(i18next@24.2.3(typescript@5.7.3))(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.7.3)
       react-router:
-        specifier: ^7.10.1
-        version: 7.10.1(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+        specifier: ^7.12.0
+        version: 7.12.0(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       remark-directive:
         specifier: ^4.0.0
         version: 4.0.0
@@ -204,6 +204,9 @@ packages:
 
   '@codemirror/commands@6.10.0':
     resolution: {integrity: sha512-2xUIc5mHXQzT16JnyOFkh8PvfeXuIut3pslWGfsGOhxP/lpgRm9HOl/mpzLErgt5mXDovqA0d11P21gofRLb9w==}
+
+  '@codemirror/commands@6.10.1':
+    resolution: {integrity: sha512-uWDWFypNdQmz2y1LaNJzK7fL7TYKLeUAU0npEC685OKTF3KcQ2Vu3klIM78D7I6wGhktme0lh3CuQLv0ZCrD9Q==}
 
   '@codemirror/lang-css@6.3.1':
     resolution: {integrity: sha512-kr5fwBGiGtmz6l0LSJIbno9QrifNMUusivHbnA1H6Dmqy4HZFte3UAICix1VuKo0lMPKQr2rqB+0BkKi/S3Ejg==}
@@ -484,6 +487,9 @@ packages:
 
   '@lezer/common@1.4.0':
     resolution: {integrity: sha512-DVeMRoGrgn/k45oQNu189BoW4SZwgZFzJ1+1TV5j2NJ/KFC83oa/enRqZSGshyeMk5cPWMhsKs9nx+8o0unwGg==}
+
+  '@lezer/common@1.5.0':
+    resolution: {integrity: sha512-PNGcolp9hr4PJdXR4ix7XtixDrClScvtSCYW3rQG106oVMOOI+jFb+0+J3mbeL/53g1Zd6s0kJzaw6Ri68GmAA==}
 
   '@lezer/css@1.3.0':
     resolution: {integrity: sha512-pBL7hup88KbI7hXnZV3PQsn43DHy6TWyzuyk2AO9UyoXcDltvIdqWKE1dLL/45JVZ+YZkHe1WVHqO6wugZZWcw==}
@@ -2554,8 +2560,8 @@ packages:
       '@types/react':
         optional: true
 
-  react-router@7.10.1:
-    resolution: {integrity: sha512-gHL89dRa3kwlUYtRQ+m8NmxGI6CgqN+k4XyGjwcFoQwwCWF6xXpOCUlDovkXClS0d0XJN/5q7kc5W3kiFEd0Yw==}
+  react-router@7.12.0:
+    resolution: {integrity: sha512-kTPDYPFzDVGIIGNLS5VJykK0HfHLY5MF3b+xj0/tTyNYL1gF1qs7u67Z9jEhQk2sQ98SUaHxlG31g1JtF7IfVw==}
     engines: {node: '>=20.0.0'}
     peerDependencies:
       react: '>=18'
@@ -3244,6 +3250,13 @@ snapshots:
       '@codemirror/view': 6.38.8
       '@lezer/common': 1.4.0
 
+  '@codemirror/commands@6.10.1':
+    dependencies:
+      '@codemirror/language': 6.11.3
+      '@codemirror/state': 6.5.2
+      '@codemirror/view': 6.38.8
+      '@lezer/common': 1.5.0
+
   '@codemirror/lang-css@6.3.1':
     dependencies:
       '@codemirror/autocomplete': 6.20.0
@@ -3496,6 +3509,8 @@ snapshots:
   '@humanwhocodes/retry@0.4.3': {}
 
   '@lezer/common@1.4.0': {}
+
+  '@lezer/common@1.5.0': {}
 
   '@lezer/css@1.3.0':
     dependencies:
@@ -4775,7 +4790,7 @@ snapshots:
   codemirror@6.0.2:
     dependencies:
       '@codemirror/autocomplete': 6.20.0
-      '@codemirror/commands': 6.10.0
+      '@codemirror/commands': 6.10.1
       '@codemirror/language': 6.11.3
       '@codemirror/lint': 6.9.2
       '@codemirror/search': 6.5.11
@@ -5918,7 +5933,7 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.2.7
 
-  react-router@7.10.1(react-dom@19.2.1(react@19.2.1))(react@19.2.1):
+  react-router@7.12.0(react-dom@19.2.1(react@19.2.1))(react@19.2.1):
     dependencies:
       cookie: 1.1.1
       react: 19.2.1
