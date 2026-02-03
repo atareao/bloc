@@ -11,7 +11,7 @@ chrono = { version = "0.4.42", features = ["serde"] }
 comrak = "0.48.0"
 cookie = "0.18.1"
 dotenv = "0.15.0"
-jsonwebtoken = { version = "10.2.0", features = ["rust_crypto"] }
+jsonwebtoken = { version = "10.3.0", features = ["rust_crypto"] }
 md_to_text = "0.0.0"
 mime-type = "0.2.0"
 mime2ext = "0.1.54"
