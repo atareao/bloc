@@ -1,5 +1,12 @@
-onlyBuiltDependencies:
-  - '@parcel/watcher'
-  - '@swc/core'
-  - es5-ext
-  - esbuild
+allowBuilds:
+  '@parcel/watcher': true
+  '@swc/core': true
+  es5-ext: true
+  esbuild: true
+
+overrides:
+  # @blocknote/core pide uuid ^8.3.2 (GHSA-w5hq-g745-h8pq); 11.1.1 sigue exponiendo v4 y
+  # el rango acota el override a esa rama para no forzar el major a futuros consumidores.
+  uuid@^8.0.0: 11.1.1
+  # La rama 10.x de minimatch no tiene parche (GHSA-g3hv-75wg-m249); scoped para no tocar la 3.x de ESLint.
+  minimatch@^10.0.0: 11.0.1
