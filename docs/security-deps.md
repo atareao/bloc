@@ -46,6 +46,18 @@ cargo update -p jsonwebtoken --precise 10.3.0
 | time | 0.3.44 | 0.3.47 |
 | tracing-subscriber | 0.3.22 | 0.3.23 |
 
+**Mapeo alertas ↔ crates.** Dependabot reportó **5 alertas Rust** (`bytes`, `jsonwebtoken`, `rand`, `rsa`, `time`), pero se actualizaron **6 crates**: los 5 vulnerables + `tracing-subscriber` 0.3.22→0.3.23 por la PR #3. Al incluir los transitivos que arrastra el bump de `time`, el lock cambia en **9 paquetes**:
+
+| Crate transitivo | Antes | Después |
+|---|---|---|
+| num-conv | 0.1.0 | 0.2.2 |
+| time-core | 0.1.6 | 0.1.8 |
+| time-macros | 0.2.24 | 0.2.27 |
+
+**MSRV.** `time 0.3.47` sube el MSRV a **Rust 1.88** (igual que `time-core` y `time-macros`). El repo no fija toolchain: el `Dockerfile` usa `rust:alpine3.22` flotante y no hay `rust-toolchain.toml` ni `rust-version` en `Cargo.toml`. *Follow-up:* fijar toolchain ≥ 1.88 para que la build no dependa de la imagen flotante.
+
+**Churn de `windows-sys`.** El lock incorpora varias versiones (`0.48.0`, `0.60.2`, `0.61.2`) por los bumps de `time`/transitivos. Son dependencias **solo-Windows**, sin impacto en Linux/musl; no es un downgrade ni una regresión, solo ruido de resolución del lock.
+
 ### npm (`front/`) — más relevantes
 
 | Paquete | Antes | Después |
@@ -92,6 +104,7 @@ Preexistentes, ajenos a este cambio:
 
 - `braces@3.0.3` permanece en el árbol: no tiene parche publicado, pero **no tiene advisory activo** (`pnpm audit` limpio). No se forzó.
 - Los 78 errores de lint y los 12 avisos de clippy deben tratarse en tareas separadas.
+- Toolchain sin fijar: `time 0.3.47` exige Rust ≥ 1.88 y el `Dockerfile` usa `rust:alpine3.22` flotante; añadir `rust-toolchain.toml` (o `rust-version`) para evitar builds dependientes de la imagen.
 - Las alertas de GitHub/Dependabot **solo se cierran tras el merge a `development` y el reanálisis posterior**; hasta entonces el panel seguirá mostrándolas.
 - `uuid` va por override a la rama 11, pero acotado con la clave `uuid@^8.0.0`, así que no afecta a futuros consumidores que declaren uuid 9+; solo aplica a `@blocknote/core`. Si `@blocknote` sube de versión, revisar si el override sigue siendo necesario.
 
